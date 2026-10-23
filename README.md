@@ -1,10 +1,34 @@
 # LiveZoomIt
 
-Ferramenta de anotação de tela para Windows, inspirada no ZoomIt (Sysinternals / PowerToys), com uma diferença principal: **a tela nunca congela**. Você desenha por cima da tela viva — vídeos, chamadas, navegadores e terminais continuam rodando por baixo dos traços.
+**Anotação de tela para Windows, no estilo do ZoomIt — mas sem congelar a tela.**
 
-- Um único `LiveZoomIt.exe` portátil, sem instalação e sem precisar do .NET instalado.
-- Roda em segundo plano, sem janela; fica só um ícone de lupa na área de notificação (perto do relógio).
-- Cobre todos os monitores.
+Feito para quem gosta do [ZoomIt](https://learn.microsoft.com/sysinternals/downloads/zoomit) e se incomoda com uma coisa: ao entrar no modo desenho, ele tira uma "foto" da tela e você passa a riscar uma imagem parada. O vídeo pausa, o chat para de atualizar, o terminal congela e você não consegue clicar em nada até sair do desenho.
+
+O LiveZoomIt desenha numa camada transparente **por cima da tela viva**. Vídeos, chamadas, navegadores e terminais continuam rodando por baixo dos traços, e com um atalho você volta a usar os programas normalmente — com as anotações ainda na tela.
+
+- **Atalhos familiares:** Ctrl+2 para desenhar, R / G / B / Y para as cores, Ctrl para retângulo, Shift para linha, E para apagar, W / K para quadro branco e negro, Ctrl+Z para desfazer.
+- **Um único `LiveZoomIt.exe` portátil:** sem instalação e sem precisar do .NET instalado.
+- **Discreto:** roda em segundo plano; fica só um ícone de lupa na área de notificação (perto do relógio).
+- **Cobre todos os monitores.**
+
+## Download
+
+Baixe o `LiveZoomIt.exe` mais recente na página de [**Releases**](https://github.com/mnisenbaum/live-zoomit/releases) e execute. Não há instalador: para "desinstalar", feche o programa (Ctrl+Shift+Q) e apague o arquivo — e, se quiser, a pasta `%APPDATA%\LiveZoomIt` com as configurações.
+
+> Na primeira execução, o Windows pode mostrar o aviso azul **"O Windows protegeu o computador"** (SmartScreen), porque o executável não é assinado digitalmente. Clique em **Mais informações → Executar assim mesmo**. Se preferir, [compile você mesmo](#para-desenvolvedores) a partir do código-fonte.
+
+## LiveZoomIt × ZoomIt
+
+| | ZoomIt | LiveZoomIt |
+|---|---|---|
+| Tela durante o desenho | Congelada numa imagem estática | **Continua viva** (vídeos, chats e terminais seguem rodando) |
+| Usar os programas com as anotações na tela | — | **Sim:** sai do modo desenho e os traços ficam; os cliques passam para os programas |
+| Desenho livre, retângulo, linha, elipse, seta | Sim | Sim (Alt + arrastar para a elipse) |
+| Cores, marca-texto, texto, quadro branco/negro, desfazer | Sim | Sim |
+| Lupa | Zoom da tela inteira | Lupa flutuante que segue o cursor (1,5× a 8×) |
+| Extras | Timer de intervalo, gravação de tela, DemoType | Caneta laser, marcadores numerados, borracha por traço, holofote, destaque de cliques, exibição de teclas |
+
+O LiveZoomIt não tenta substituir tudo o que o ZoomIt faz — o foco é anotar sem perder a tela viva.
 
 ---
 
@@ -299,6 +323,9 @@ SAIR           Esc · Ctrl+2
 | Apertei uma letra e nada aconteceu | Fora do modo desenho as teclas vão para os outros programas. Entre com Ctrl+2. Durante a digitação de um texto, as letras vão para o texto. |
 | Os traços continuam na tela depois de sair do desenho | É intencional. Entre no modo desenho e aperte **E**. |
 | Traços borrados ou deslocados com monitores de escalas diferentes | Limitação conhecida quando os monitores usam escalas diferentes (ex.: 100% e 150%). |
+| Aviso "O Windows protegeu o computador" ao abrir | O executável não é assinado digitalmente. Clique em **Mais informações → Executar assim mesmo**, ou compile a partir do código-fonte. |
+| Antivírus reclama do programa | O destaque de cliques e a exibição de teclas usam hooks globais de mouse e teclado — o mesmo mecanismo de ferramentas de acessibilidade e gravação de tela, que alguns antivírus tratam com desconfiança. Eles só ficam ativos enquanto esses recursos estão ligados, e nada é gravado em disco nem enviado pela rede. |
+| Encontrei um bug / tenho uma sugestão | Abra uma [issue](https://github.com/mnisenbaum/live-zoomit/issues). |
 
 ---
 
@@ -313,7 +340,15 @@ SAIR           Esc · Ctrl+2
 
 ### Compilar e publicar
 
-Requer o .NET SDK 10.
+Requer o [.NET SDK 10](https://dotnet.microsoft.com/download) (no Windows: `winget install Microsoft.DotNet.SDK.10`).
+
+```bash
+git clone https://github.com/mnisenbaum/live-zoomit.git
+```
+
+```bash
+cd live-zoomit
+```
 
 ```bash
 dotnet build LiveZoomIt.slnx
@@ -364,3 +399,9 @@ O executável fica em `LiveZoomIt/publish/LiveZoomIt.exe`.
 - O destaque de cliques e o zoom da lupa compartilham um hook global de mouse (`WH_MOUSE_LL`), instalado apenas enquanto um dos dois estiver ligado.
 - A exibição de teclas usa um hook global de teclado (`WH_KEYBOARD_LL`), ativo só enquanto ligada. O caractere vem de `MapVirtualKey`, que — ao contrário de `ToUnicode` — não interfere nos acentos que você está digitando. As etiquetas ficam numa janela pequena própria, para não redesenhar o overlay de tela cheia a cada tecla.
 - O ícone da área de notificação usa o `NotifyIcon` do Windows Forms e é desenhado em tempo de execução.
+
+---
+
+## Aviso
+
+O LiveZoomIt é um projeto independente, sem nenhuma relação com a Microsoft ou a Sysinternals. ZoomIt é um produto da Microsoft; o nome é citado apenas como referência ao estilo de uso e aos atalhos que inspiraram este projeto.
