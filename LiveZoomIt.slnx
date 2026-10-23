@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="LiveZoomIt.Tests/LiveZoomIt.Tests.csproj" />
+  <Project Path="LiveZoomIt/LiveZoomIt.csproj" />
+</Solution>

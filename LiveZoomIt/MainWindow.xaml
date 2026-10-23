@@ -17,17 +17,29 @@
         <!-- Superfície de desenho. No modo passivo fica sem fundo e sem edição. -->
         <InkCanvas x:Name="Ink" Background="Transparent" EditingMode="None" />
 
-        <!-- Área do monitor primário (posicionada em código), usada para a dica do modo desenho. -->
+        <!-- Área do monitor primário (posicionada em código), usada para a dica e os avisos. -->
         <Grid x:Name="PrimaryArea" HorizontalAlignment="Left" VerticalAlignment="Top" IsHitTestVisible="False">
-            <Border x:Name="Hint" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Top"
-                    Margin="0,16,0,0" Padding="14,8" CornerRadius="8" Background="#D01E1E1E">
-                <StackPanel Orientation="Horizontal">
-                    <Ellipse x:Name="ColorSwatch" Width="14" Height="14" Margin="0,0,10,0" VerticalAlignment="Center"
-                             Fill="Red" Stroke="White" StrokeThickness="1" />
-                    <TextBlock Foreground="White" FontFamily="Segoe UI" FontSize="13" VerticalAlignment="Center"
-                               Text="DESENHO  ·  R G B Y cor  ·  W / K quadro  ·  E limpar  ·  Ctrl+Z desfazer  ·  Esc sair" />
-                </StackPanel>
-            </Border>
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,16,0,0">
+                <Border x:Name="Hint" Visibility="Collapsed" Padding="14,8" CornerRadius="8" Background="#D01E1E1E">
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse x:Name="ColorSwatch" Width="16" Height="16" Margin="0,0,10,0" VerticalAlignment="Center"
+                                 Fill="Red" Stroke="White" StrokeThickness="1" />
+                        <TextBlock x:Name="ToolText" MinWidth="130" VerticalAlignment="Center"
+                                   Foreground="White" FontFamily="Segoe UI" FontSize="14" FontWeight="SemiBold" />
+                        <Rectangle Width="1" Margin="12,2" Fill="#60FFFFFF" />
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Foreground="#E0FFFFFF" FontFamily="Segoe UI" FontSize="12"
+                                       Text="R G B Y O P cor  ·  Shift+cor marca-texto  ·  T texto  ·  Ctrl+roda espessura  ·  W / K quadro  ·  E limpar" />
+                            <TextBlock Foreground="#E0FFFFFF" FontFamily="Segoe UI" FontSize="12"
+                                       Text="Arrastar com Ctrl retângulo · Shift linha · Alt elipse · Ctrl+Shift seta  ·  Ctrl+Z / Ctrl+Y  ·  Ctrl+C copiar · Ctrl+S salvar  ·  Esc sair" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+                <Border x:Name="Toast" Visibility="Collapsed" Margin="0,8,0,0" Padding="12,6" CornerRadius="6"
+                        HorizontalAlignment="Center" Background="#E0202A3A">
+                    <TextBlock x:Name="ToastText" Foreground="White" FontFamily="Segoe UI" FontSize="13" />
+                </Border>
+            </StackPanel>
         </Grid>
     </Grid>
 </Window>
