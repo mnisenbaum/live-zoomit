@@ -17,6 +17,9 @@
         <!-- Superfície de desenho. No modo passivo fica sem fundo e sem edição. -->
         <InkCanvas x:Name="Ink" Background="Transparent" EditingMode="None" />
 
+        <!-- Anéis do destaque de cliques (Ctrl+4). -->
+        <Canvas x:Name="EffectsLayer" IsHitTestVisible="False" />
+
         <!-- Área do monitor primário (posicionada em código), usada para a dica e os avisos. -->
         <Grid x:Name="PrimaryArea" HorizontalAlignment="Left" VerticalAlignment="Top" IsHitTestVisible="False">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,16,0,0">
@@ -29,9 +32,11 @@
                         <Rectangle Width="1" Margin="12,2" Fill="#60FFFFFF" />
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Foreground="#E0FFFFFF" FontFamily="Segoe UI" FontSize="12"
-                                       Text="R G B Y O P cor  ·  Shift+cor marca-texto  ·  T texto  ·  Ctrl+roda espessura  ·  W / K quadro  ·  E limpar" />
+                                       Text="R G B Y O P cor  ·  Shift+cor marca-texto  ·  L laser  ·  T texto  ·  N números  ·  Ctrl+roda tamanho  ·  W / K quadro" />
                             <TextBlock Foreground="#E0FFFFFF" FontFamily="Segoe UI" FontSize="12"
-                                       Text="Arrastar com Ctrl retângulo · Shift linha · Alt elipse · Ctrl+Shift seta  ·  Ctrl+Z / Ctrl+Y  ·  Ctrl+C copiar · Ctrl+S salvar  ·  Esc sair" />
+                                       Text="Arrastar com Ctrl retângulo · Shift linha · Alt elipse · Ctrl+Shift seta  ·  Botão direito apaga  ·  E limpar tudo" />
+                            <TextBlock Foreground="#E0FFFFFF" FontFamily="Segoe UI" FontSize="12"
+                                       Text="Ctrl+Z / Ctrl+Y desfazer / refazer  ·  Ctrl+C copiar · Ctrl+S salvar  ·  Esc sair" />
                         </StackPanel>
                     </StackPanel>
                 </Border>

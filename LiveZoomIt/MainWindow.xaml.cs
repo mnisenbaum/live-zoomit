@@ -12,13 +12,24 @@ namespace LiveZoomIt;
 /// Overlay transparente sobre toda a tela virtual. No modo passivo é click-through
 /// (WS_EX_TRANSPARENT); no modo desenho recebe mouse/teclado e o InkCanvas captura os traços.
 /// A tela por baixo nunca é congelada: nada é capturado, apenas desenhado por cima.
-/// As ferramentas de desenho ficam em MainWindow.Drawing.cs.
+/// As ferramentas de desenho ficam em MainWindow.Drawing.cs; holofote e destaque de cliques em MainWindow.Effects.cs.
 /// </summary>
 public partial class MainWindow : Window
 {
     private const int HotkeyToggleDraw = 1;
     private const int HotkeyToggleMagnifier = 2;
     private const int HotkeyQuit = 3;
+    private const int HotkeyToggleSpotlight = 4;
+    private const int HotkeyToggleClickHighlights = 5;
+
+    private static readonly (int Id, uint Modifiers, uint Key, string Name)[] Hotkeys =
+    [
+        (HotkeyToggleDraw, Native.MOD_CONTROL, 0x32, "Ctrl+2"),
+        (HotkeyToggleMagnifier, Native.MOD_CONTROL, 0x31, "Ctrl+1"),
+        (HotkeyToggleSpotlight, Native.MOD_CONTROL, 0x33, "Ctrl+3"),
+        (HotkeyToggleClickHighlights, Native.MOD_CONTROL, 0x34, "Ctrl+4"),
+        (HotkeyQuit, Native.MOD_CONTROL | Native.MOD_SHIFT, 0x51, "Ctrl+Shift+Q"),
+    ];
 
     // Alfa 1/255: invisível, mas faz a janela em camadas receber cliques sobre áreas "vazias".
     private static readonly Brush HitTestableTransparent = CreateFrozenBrush(Color.FromArgb(1, 0, 0, 0));
@@ -71,12 +82,13 @@ public partial class MainWindow : Window
         SystemEvents.DisplaySettingsChanged -= OnDisplaySettingsChanged;
         if (_hwnd != IntPtr.Zero)
         {
-            Native.UnregisterHotKey(_hwnd, HotkeyToggleDraw);
-            Native.UnregisterHotKey(_hwnd, HotkeyToggleMagnifier);
-            Native.UnregisterHotKey(_hwnd, HotkeyQuit);
+            foreach (var hotkey in Hotkeys)
+                Native.UnregisterHotKey(_hwnd, hotkey.Id);
         }
         _source?.RemoveHook(WndProc);
+        RemoveMouseHook();
         _magnifier?.Close();
+        _spotlight?.Dispose();
         base.OnClosed(e);
     }
 
@@ -89,14 +101,13 @@ public partial class MainWindow : Window
     private void RegisterHotKeys()
     {
         var failed = new List<string>();
-        if (!Native.RegisterHotKey(_hwnd, HotkeyToggleDraw, Native.MOD_CONTROL | Native.MOD_NOREPEAT, 0x32)) // '2'
-            failed.Add("Ctrl+2");
-        if (!Native.RegisterHotKey(_hwnd, HotkeyToggleMagnifier, Native.MOD_CONTROL | Native.MOD_NOREPEAT, 0x31)) // '1'
-            failed.Add("Ctrl+1");
-        if (!Native.RegisterHotKey(_hwnd, HotkeyQuit, Native.MOD_CONTROL | Native.MOD_SHIFT | Native.MOD_NOREPEAT, 0x51)) // 'Q'
-            failed.Add("Ctrl+Shift+Q");
+        foreach (var hotkey in Hotkeys)
+        {
+            if (!Native.RegisterHotKey(_hwnd, hotkey.Id, hotkey.Modifiers | Native.MOD_NOREPEAT, hotkey.Key))
+                failed.Add(hotkey.Name);
+        }
 
-        if (failed.Count == 3)
+        if (failed.Count == Hotkeys.Length)
         {
             MessageBox.Show("Nenhum atalho global pôde ser registrado (o LiveZoomIt já está em execução?).",
                 "LiveZoomIt", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -121,6 +132,12 @@ public partial class MainWindow : Window
                         break;
                     case HotkeyToggleMagnifier:
                         ToggleMagnifier();
+                        break;
+                    case HotkeyToggleSpotlight:
+                        ToggleSpotlight();
+                        break;
+                    case HotkeyToggleClickHighlights:
+                        ToggleClickHighlights();
                         break;
                     case HotkeyQuit:
                         Quit();
@@ -163,7 +180,8 @@ public partial class MainWindow : Window
     private void ExitDrawMode()
     {
         FinishShape();
-        if (_textTool) SetTextTool(false);
+        FinishErase();
+        if (_tool != Tool.Pen) SetTool(Tool.Pen);
         _drawing = false;
 
         Board.Visibility = Visibility.Collapsed;
@@ -201,7 +219,12 @@ public partial class MainWindow : Window
     // ---------------------------------------------------------------- geometria
 
     private void OnDisplaySettingsChanged(object? sender, EventArgs e) =>
-        Dispatcher.BeginInvoke(CoverVirtualScreen);
+        Dispatcher.InvokeAsync(() =>
+        {
+            CoverVirtualScreen();
+            if (_spotlight?.IsRunning == true)
+                _spotlight.CoverVirtualScreen();
+        });
 
     private void CoverVirtualScreen()
     {

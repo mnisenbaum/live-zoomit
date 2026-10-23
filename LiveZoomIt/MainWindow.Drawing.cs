@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Ink;
@@ -9,49 +10,70 @@ using LiveZoomIt.Drawing;
 namespace LiveZoomIt;
 
 /// <summary>
-/// Ferramentas do modo desenho: caneta e marca-texto, formas por modificador
-/// (Ctrl retângulo, Shift linha, Alt elipse, Ctrl+Shift seta), texto, desfazer/refazer
-/// e captura da tela anotada.
+/// Ferramentas do modo desenho: caneta, marca-texto e laser; formas por modificador
+/// (Ctrl retângulo, Shift linha, Alt elipse, Ctrl+Shift seta); texto; marcadores numerados;
+/// borracha no botão direito; desfazer/refazer e captura da tela anotada.
 /// </summary>
 public partial class MainWindow
 {
+    private enum Tool { Pen, Text, Marker }
+    private enum PenStyle { Normal, Highlighter, Laser }
+
+    private sealed record LaserStroke(Stroke Stroke, Color Color, TimeSpan CompletedAt);
+
     private static readonly double[] PenWidths = [1, 2, 3, 4, 6, 8, 10, 13, 16, 20, 25, 32, 40];
     private static readonly double[] FontSizes = [12, 14, 16, 18, 20, 24, 28, 32, 40, 48, 56, 64, 80, 96, 120];
     private static readonly FontFamily TextFont = new("Segoe UI");
+    private const double EraserDiameter = 16;
+    private const double MarkerDiameterPerFontSize = 1.3;
 
     private readonly UndoStack _undo = new();
     private readonly DispatcherTimer _toastTimer = new() { Interval = TimeSpan.FromSeconds(2.5) };
+    private readonly DispatcherTimer _laserTimer = new() { Interval = TimeSpan.FromMilliseconds(33) };
+    private readonly Stopwatch _laserClock = Stopwatch.StartNew();
+    private readonly List<LaserStroke> _laserStrokes = [];
 
     private Color _penColor = Colors.Red;
-    private bool _highlighter;
+    private PenStyle _penStyle = PenStyle.Normal;
     private int _penWidthIndex = 3;
     private int _fontSizeIndex = 6;
 
-    private bool _textTool;
+    private Tool _tool = Tool.Pen;
     private TextBox? _activeText;
 
     private ShapeKind? _shapeKind;
     private Point _shapeStart;
     private Stroke? _shapeStroke;
 
+    private EraseAction? _erase;
+    private Point _eraseLast;
+
     // O marca-texto precisa ser bem mais largo que a caneta para cobrir uma linha de texto.
-    private double CurrentPenWidth =>
-        _highlighter ? Math.Max(PenWidths[_penWidthIndex] * 3, 12) : PenWidths[_penWidthIndex];
+    private double CurrentPenWidth => _penStyle == PenStyle.Highlighter
+        ? Math.Max(PenWidths[_penWidthIndex] * 3, 12)
+        : PenWidths[_penWidthIndex];
 
     private void InitializeDrawing()
     {
-        Ink.StrokeCollected += (_, e) => _undo.Push(new StrokeAddedAction(Ink.Strokes, e.Stroke));
+        Ink.StrokeCollected += (_, e) => CommitStroke(e.Stroke);
         PreviewMouseLeftButtonDown += OnPreviewMouseLeftButtonDown;
+        PreviewMouseRightButtonDown += OnPreviewMouseRightButtonDown;
         PreviewMouseMove += OnPreviewMouseMove;
         PreviewMouseLeftButtonUp += OnPreviewMouseLeftButtonUp;
+        PreviewMouseRightButtonUp += OnPreviewMouseRightButtonUp;
         PreviewMouseWheel += OnPreviewMouseWheel;
         PreviewStylusDown += OnPreviewStylusDown;
-        LostMouseCapture += (_, _) => FinishShape();
+        LostMouseCapture += (_, _) =>
+        {
+            FinishShape();
+            FinishErase();
+        };
         _toastTimer.Tick += (_, _) =>
         {
             _toastTimer.Stop();
             Toast.Visibility = Visibility.Collapsed;
         };
+        _laserTimer.Tick += (_, _) => FadeLaserStrokes();
         ApplyPenAttributes();
     }
 
@@ -60,6 +82,7 @@ public partial class MainWindow
     private DrawingAttributes CreateAttributes(bool freehand)
     {
         double width = CurrentPenWidth;
+        bool highlighter = _penStyle == PenStyle.Highlighter;
         return new DrawingAttributes
         {
             Color = _penColor,
@@ -68,8 +91,8 @@ public partial class MainWindow
             // Formas não podem ser suavizadas, senão os cantos do retângulo e da seta arredondam.
             FitToCurve = freehand,
             IgnorePressure = !freehand,
-            StylusTip = _highlighter ? StylusTip.Rectangle : StylusTip.Ellipse,
-            IsHighlighter = _highlighter,
+            StylusTip = highlighter ? StylusTip.Rectangle : StylusTip.Ellipse,
+            IsHighlighter = highlighter,
         };
     }
 
@@ -79,10 +102,10 @@ public partial class MainWindow
         UpdateHint();
     }
 
-    private void SetPen(Color color, bool highlighter)
+    private void SetPen(Color color, PenStyle style)
     {
         _penColor = color;
-        _highlighter = highlighter;
+        _penStyle = style;
         ApplyPenAttributes();
     }
 
@@ -102,7 +125,8 @@ public partial class MainWindow
 
     private void StepSize(int direction)
     {
-        if (_textTool)
+        // Texto e marcadores usam o tamanho da fonte; a caneta usa a espessura.
+        if (_tool != Tool.Pen)
         {
             _fontSizeIndex = Math.Clamp(_fontSizeIndex + direction, 0, FontSizes.Length - 1);
             if (_activeText is not null)
@@ -119,10 +143,91 @@ public partial class MainWindow
     private void UpdateHint()
     {
         ColorSwatch.Fill = CreateFrozenBrush(_penColor);
-        ToolText.Text = _textTool
-            ? $"Texto · {FontSizes[_fontSizeIndex]} pt"
-            : $"{(_highlighter ? "Marca-texto" : "Caneta")} · {CurrentPenWidth:0.#} px";
+        string penName = _penStyle switch
+        {
+            PenStyle.Highlighter => "Marca-texto",
+            PenStyle.Laser => "Laser",
+            _ => "Caneta",
+        };
+        ToolText.Text = _tool switch
+        {
+            Tool.Text => $"Texto · {FontSizes[_fontSizeIndex]} pt",
+            Tool.Marker => $"Números · {FontSizes[_fontSizeIndex]} pt",
+            _ => $"{penName} · {CurrentPenWidth:0.#} px",
+        };
     }
+
+    private void SetTool(Tool tool)
+    {
+        if (_tool == Tool.Text)
+            CommitActiveText();
+
+        _tool = tool;
+        RestoreEditingMode();
+        Ink.UseCustomCursor = tool != Tool.Pen;
+        Ink.Cursor = tool switch
+        {
+            Tool.Text => Cursors.IBeam,
+            Tool.Marker => Cursors.Hand,
+            _ => null,
+        };
+        UpdateHint();
+    }
+
+    /// <summary>O InkCanvas só coleta traço livre com a caneta ativa e nenhum arraste especial em curso.</summary>
+    private void RestoreEditingMode() =>
+        Ink.EditingMode = _drawing && _tool == Tool.Pen && _shapeKind is null && _erase is null
+            ? InkCanvasEditingMode.Ink
+            : InkCanvasEditingMode.None;
+
+    /// <summary>Traço terminado (livre ou forma): entra no desfazer, ou começa a sumir se for laser.</summary>
+    private void CommitStroke(Stroke stroke)
+    {
+        if (_penStyle != PenStyle.Laser)
+        {
+            _undo.Push(new StrokeAddedAction(Ink.Strokes, stroke));
+            return;
+        }
+
+        stroke.DrawingAttributes = stroke.DrawingAttributes.Clone();
+        _laserStrokes.Add(new LaserStroke(stroke, stroke.DrawingAttributes.Color, _laserClock.Elapsed));
+        _laserTimer.Start();
+    }
+
+    // ---------------------------------------------------------------- laser
+
+    private void FadeLaserStrokes()
+    {
+        TimeSpan now = _laserClock.Elapsed;
+        for (int i = _laserStrokes.Count - 1; i >= 0; i--)
+        {
+            var laser = _laserStrokes[i];
+            double opacity = LaserFade.Opacity(now - laser.CompletedAt);
+            if (opacity <= 0)
+            {
+                Ink.Strokes.Remove(laser.Stroke);
+                _laserStrokes.RemoveAt(i);
+            }
+            else if (opacity < 1)
+            {
+                var c = laser.Color;
+                laser.Stroke.DrawingAttributes.Color = Color.FromArgb((byte)(c.A * opacity), c.R, c.G, c.B);
+            }
+        }
+
+        if (_laserStrokes.Count == 0)
+            _laserTimer.Stop();
+    }
+
+    private void ClearLaserStrokes()
+    {
+        foreach (var laser in _laserStrokes)
+            Ink.Strokes.Remove(laser.Stroke);
+        _laserStrokes.Clear();
+        _laserTimer.Stop();
+    }
+
+    private bool IsLaserStroke(Stroke stroke) => _laserStrokes.Exists(l => l.Stroke == stroke);
 
     // ---------------------------------------------------------------- teclado
 
@@ -182,7 +287,7 @@ public partial class MainWindow
 
         if (modifiers == ModifierKeys.Shift && TryGetPenColor(key, out var highlighterColor))
         {
-            SetPen(highlighterColor, highlighter: true);
+            SetPen(highlighterColor, PenStyle.Highlighter);
             e.Handled = true;
             return;
         }
@@ -192,19 +297,25 @@ public partial class MainWindow
 
         if (TryGetPenColor(key, out var penColor))
         {
-            SetPen(penColor, highlighter: false);
+            // Trocar a cor mantém o laser ligado, mas sai do marca-texto.
+            SetPen(penColor, _penStyle == PenStyle.Laser ? PenStyle.Laser : PenStyle.Normal);
             e.Handled = true;
             return;
         }
 
         switch (key)
         {
-            case Key.T: SetTextTool(!_textTool); break;
+            case Key.L:
+                SetPen(_penColor, _penStyle == PenStyle.Laser ? PenStyle.Normal : PenStyle.Laser);
+                SetTool(Tool.Pen);
+                break;
+            case Key.T: SetTool(_tool == Tool.Text ? Tool.Pen : Tool.Text); break;
+            case Key.N: SetTool(_tool == Tool.Marker ? Tool.Pen : Tool.Marker); break;
             case Key.W: ToggleBoard(Colors.White); break;
             case Key.K: ToggleBoard(Colors.Black); break;
             case Key.E: ClearDrawing(); break;
             case Key.Escape:
-                if (_textTool) SetTextTool(false); else ExitDrawMode();
+                if (_tool != Tool.Pen) SetTool(Tool.Pen); else ExitDrawMode();
                 break;
             default: return;
         }
@@ -229,6 +340,8 @@ public partial class MainWindow
 
     private void ClearDrawing()
     {
+        // Traços laser já estão sumindo sozinhos; não fazem parte do desfazer.
+        ClearLaserStrokes();
         if (Ink.Strokes.Count == 0 && Ink.Children.Count == 0)
             return;
 
@@ -237,17 +350,22 @@ public partial class MainWindow
         _undo.Push(clear);
     }
 
-    // ---------------------------------------------------------------- mouse: formas e roda
+    // ---------------------------------------------------------------- mouse: formas, marcadores, roda
 
     private void OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (!_drawing)
+        if (!_drawing || _erase is not null)
             return;
 
-        if (_textTool)
+        switch (_tool)
         {
-            OnTextToolClick(e);
-            return;
+            case Tool.Text:
+                OnTextToolClick(e);
+                return;
+            case Tool.Marker:
+                PlaceMarker(e.GetPosition(Ink));
+                e.Handled = true;
+                return;
         }
 
         if (ShapeBuilder.FromModifiers(Keyboard.Modifiers) is not { } kind)
@@ -256,7 +374,7 @@ public partial class MainWindow
         _shapeKind = kind;
         _shapeStart = e.GetPosition(Ink);
         _shapeStroke = null;
-        Ink.EditingMode = InkCanvasEditingMode.None;
+        RestoreEditingMode();
         CaptureMouse();
         e.Handled = true;
     }
@@ -265,12 +383,21 @@ public partial class MainWindow
     {
         // Caneta física com modificador: impede o InkCanvas de iniciar um traço livre;
         // o evento de mouse promovido em seguida começa a forma.
-        if (_drawing && !_textTool && ShapeBuilder.FromModifiers(Keyboard.Modifiers) is not null)
+        if (_drawing && _tool == Tool.Pen && ShapeBuilder.FromModifiers(Keyboard.Modifiers) is not null)
             Ink.EditingMode = InkCanvasEditingMode.None;
     }
 
     private void OnPreviewMouseMove(object sender, MouseEventArgs e)
     {
+        if (_erase is not null)
+        {
+            Point p = e.GetPosition(Ink);
+            EraseAlong(_eraseLast, p);
+            _eraseLast = p;
+            e.Handled = true;
+            return;
+        }
+
         if (_shapeKind is not { } kind)
             return;
 
@@ -307,12 +434,23 @@ public partial class MainWindow
 
         _shapeKind = null; // antes de liberar a captura, que dispara LostMouseCapture
         if (_shapeStroke is not null)
-            _undo.Push(new StrokeAddedAction(Ink.Strokes, _shapeStroke));
+            CommitStroke(_shapeStroke);
         _shapeStroke = null;
         ReleaseMouseCapture();
+        RestoreEditingMode();
+    }
 
-        if (_drawing && !_textTool)
-            Ink.EditingMode = InkCanvasEditingMode.Ink;
+    private void PlaceMarker(Point center)
+    {
+        int number = StepMarkers.NextNumber(Ink.Children.OfType<StepMarker>().Select(m => m.Number));
+        double diameter = FontSizes[_fontSizeIndex] * MarkerDiameterPerFontSize;
+        var marker = new StepMarker(number, _penColor, diameter);
+        InkCanvas.SetLeft(marker, center.X - diameter / 2);
+        InkCanvas.SetTop(marker, center.Y - diameter / 2);
+
+        var added = new ElementAddedAction(Ink.Children, marker);
+        added.Redo();
+        _undo.Push(added);
     }
 
     private void OnPreviewMouseWheel(object sender, MouseWheelEventArgs e)
@@ -323,19 +461,65 @@ public partial class MainWindow
         e.Handled = true;
     }
 
-    // ---------------------------------------------------------------- texto
+    // ---------------------------------------------------------------- borracha (botão direito)
 
-    private void SetTextTool(bool enabled)
+    private void OnPreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (!enabled)
-            CommitActiveText();
+        if (!_drawing || _shapeKind is not null)
+            return;
 
-        _textTool = enabled;
-        Ink.EditingMode = enabled ? InkCanvasEditingMode.None : InkCanvasEditingMode.Ink;
-        Ink.UseCustomCursor = enabled;
-        Ink.Cursor = enabled ? Cursors.IBeam : null;
-        UpdateHint();
+        CommitActiveText();
+        _erase = new EraseAction(Ink.Strokes, Ink.Children);
+        _eraseLast = e.GetPosition(Ink);
+        RestoreEditingMode();
+        Mouse.OverrideCursor = Cursors.Cross;
+        EraseAlong(_eraseLast, _eraseLast);
+        CaptureMouse();
+        e.Handled = true;
     }
+
+    private void OnPreviewMouseRightButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (_erase is null)
+            return;
+        FinishErase();
+        e.Handled = true;
+    }
+
+    /// <summary>Apaga traços, textos e marcadores tocados no trecho entre dois pontos do arraste.</summary>
+    private void EraseAlong(Point from, Point to)
+    {
+        var hits = Ink.Strokes.HitTest([from, to], new EllipseStylusShape(EraserDiameter, EraserDiameter));
+        foreach (var stroke in hits)
+        {
+            if (!IsLaserStroke(stroke))
+                _erase!.EraseStroke(stroke);
+        }
+
+        var eraserBounds = new Rect(from, to);
+        eraserBounds.Inflate(EraserDiameter / 2, EraserDiameter / 2);
+        foreach (var child in Ink.Children.OfType<FrameworkElement>().ToList())
+        {
+            var bounds = new Rect(InkCanvas.GetLeft(child), InkCanvas.GetTop(child), child.ActualWidth, child.ActualHeight);
+            if (bounds.IntersectsWith(eraserBounds))
+                _erase!.EraseChild(child);
+        }
+    }
+
+    private void FinishErase()
+    {
+        if (_erase is not { } erase)
+            return;
+
+        _erase = null; // antes de liberar a captura, que dispara LostMouseCapture
+        if (!erase.IsEmpty)
+            _undo.Push(erase);
+        Mouse.OverrideCursor = null;
+        ReleaseMouseCapture();
+        RestoreEditingMode();
+    }
+
+    // ---------------------------------------------------------------- texto
 
     private void OnTextToolClick(MouseButtonEventArgs e)
     {

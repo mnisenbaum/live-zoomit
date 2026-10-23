@@ -38,9 +38,11 @@ Funcionam em qualquer programa, a qualquer momento.
 |---|---|
 | **Ctrl+2** | Liga / desliga o modo desenho |
 | **Ctrl+1** | Liga / desliga a lupa |
+| **Ctrl+3** | Liga / desliga o holofote |
+| **Ctrl+4** | Liga / desliga o destaque de cliques |
 | **Ctrl+Shift+Q** | Fecha o LiveZoomIt |
 
-> Enquanto o LiveZoomIt estiver aberto, **Ctrl+1** e **Ctrl+2** ficam reservados para ele em todo o sistema (por exemplo, deixam de trocar de aba no navegador).
+> Enquanto o LiveZoomIt estiver aberto, **Ctrl+1** a **Ctrl+4** ficam reservados para ele em todo o sistema (por exemplo, deixam de trocar de aba no navegador).
 
 ---
 
@@ -74,8 +76,15 @@ A forma é escolhida pela tecla que está **segurada no momento em que você ape
 | **P** | Rosa | Marca-texto rosa |
 
 - O **marca-texto** é largo e semitransparente, para destacar sem esconder o que está por baixo. Ele tem 3× a espessura da caneta (mínimo de 12 px).
-- Apertar uma cor **sem** Shift volta para a caneta normal.
+- Apertar uma cor **sem** Shift sai do marca-texto e volta para a caneta normal (ou continua no laser, se ele estiver ligado).
 - A cor inicial é vermelho.
+
+### Caneta laser (L)
+
+- **L** liga / desliga a caneta laser.
+- Tudo o que você desenha com o laser — traço livre ou forma — fica 1 segundo na tela e some em meio segundo. Ótimo para apontar algo numa reunião sem precisar apagar depois.
+- O laser usa a cor e a espessura atuais, e trocar a cor (R, G, B…) mantém o laser ligado.
+- Traços laser não entram no desfazer.
 
 ### Espessura
 
@@ -97,6 +106,22 @@ Espessuras disponíveis: 1, 2, 3, 4, 6, 8, 10, 13, 16, 20, 25, 32 e 40 px (padr�
 - Tamanho da fonte: **Ctrl + roda** ou **Ctrl+↑/↓**, de 12 a 120 pt (padrão: 28 pt). Funciona também durante a digitação.
 - Texto vazio é descartado.
 
+### Marcadores numerados (N)
+
+1. Aperte **N** para ativar os marcadores (o cursor vira uma mão).
+2. Cada clique coloca um círculo com o próximo número: 1, 2, 3…
+3. Aperte **Esc** (ou **N**) para voltar à caneta.
+
+- O círculo usa a cor atual; o número fica preto em cores claras (amarelo, laranja) e branco nas demais.
+- O tamanho segue o tamanho da fonte: **Ctrl + roda** ou **Ctrl+↑/↓**.
+- O próximo número é sempre um a mais que o maior que está na tela. Apagar tudo (**E**) recomeça do 1.
+
+### Borracha (botão direito)
+
+- **Segure o botão direito e arraste** sobre traços, formas, textos ou marcadores para apagar só o que você tocar.
+- Funciona com qualquer ferramenta ativa.
+- Cada passada da borracha conta como uma ação: **Ctrl+Z** traz de volta tudo o que ela apagou.
+
 ### Quadro branco e quadro negro
 
 | Tecla | Ação |
@@ -112,9 +137,10 @@ O quadro cobre a tela inteira por trás dos traços e some automaticamente ao sa
 |---|---|
 | **Ctrl+Z** | Desfaz a última ação |
 | **Ctrl+Y** ou **Ctrl+Shift+Z** | Refaz |
-| **E** | Apaga todos os traços e textos |
+| **E** | Apaga todos os traços, textos e marcadores |
+| Botão direito + arrastar | Apaga só o que for tocado |
 
-Cada traço, forma, texto ou "apagar tudo" conta como uma ação. Até o **E** pode ser desfeito com Ctrl+Z.
+Cada traço, forma, texto, marcador, passada de borracha ou "apagar tudo" conta como uma ação. Até o **E** pode ser desfeito com Ctrl+Z.
 
 ### Copiar e salvar a tela anotada
 
@@ -130,7 +156,7 @@ Cada traço, forma, texto ou "apagar tudo" conta como uma ação. Até o **E** p
 
 | Tecla | Ação |
 |---|---|
-| **Esc** | Sai do modo desenho (se a ferramenta de texto estiver ativa, primeiro volta para a caneta) |
+| **Esc** | Sai do modo desenho (se o texto ou os marcadores estiverem ativos, primeiro volta para a caneta) |
 | **Ctrl+2** | Sai do modo desenho |
 | **Alt+F4** | Também só sai do modo desenho — **não** fecha o programa |
 
@@ -145,17 +171,35 @@ Cada traço, forma, texto ou "apagar tudo" conta como uma ação. Até o **E** p
 
 ---
 
+## Holofote (Ctrl+3)
+
+- Escurece todos os monitores e deixa só um círculo claro em volta do cursor, que acompanha o mouse.
+- Funciona nos dois modos. No modo transparente você continua clicando e usando os programas normalmente; vídeos continuam rodando.
+- Pode ser combinado com a lupa e com o desenho.
+- A borda do círculo é serrilhada (sem suavização) — é o preço de o holofote não pesar no computador mesmo com vários monitores.
+
+---
+
+## Destaque de cliques (Ctrl+4)
+
+- Mostra um anel animado onde você clica: **amarelo** para o botão esquerdo e **azul** para o direito. Ajuda quem assiste a uma demonstração ou gravação a acompanhar seus cliques.
+- Funciona só no **modo transparente** — no modo desenho os cliques já viram traços.
+- Um aviso no topo da tela confirma quando o destaque é ligado ou desligado.
+
+---
+
 ## Referência rápida
 
 ```
-GLOBAIS        Ctrl+2 desenho · Ctrl+1 lupa · Ctrl+Shift+Q sair
+GLOBAIS        Ctrl+2 desenho · Ctrl+1 lupa · Ctrl+3 holofote · Ctrl+4 cliques · Ctrl+Shift+Q sair
 
 FORMAS         arrastar: livre · Ctrl: retângulo · Shift: linha · Alt: elipse · Ctrl+Shift: seta
-CORES          R G B Y O P (caneta) · Shift+cor (marca-texto)
+CORES          R G B Y O P (caneta) · Shift+cor (marca-texto) · L laser
 ESPESSURA      Ctrl+roda · Ctrl+↑/↓
 TEXTO          T, clicar, digitar, Esc
+NÚMEROS        N, clicar, clicar…, Esc
 QUADRO         W branco · K preto
-EDIÇÃO         Ctrl+Z desfazer · Ctrl+Y refazer · E apagar tudo
+EDIÇÃO         Ctrl+Z desfazer · Ctrl+Y refazer · botão direito apaga · E apagar tudo
 CAPTURA        Ctrl+C copiar · Ctrl+S salvar PNG
 SAIR           Esc · Ctrl+2
 ```
@@ -166,7 +210,7 @@ SAIR           Esc · Ctrl+2
 
 | Sintoma | Causa e solução |
 |---|---|
-| Aviso "Atalhos em uso por outro programa" | Outro programa já usa Ctrl+1, Ctrl+2 ou Ctrl+Shift+Q. Os atalhos livres continuam funcionando; feche o outro programa e reabra o LiveZoomIt. |
+| Aviso "Atalhos em uso por outro programa" | Outro programa já usa Ctrl+1, Ctrl+2, Ctrl+3, Ctrl+4 ou Ctrl+Shift+Q. Os atalhos livres continuam funcionando; feche o outro programa e reabra o LiveZoomIt. |
 | Aviso "Nenhum atalho global pôde ser registrado" e o programa fecha | Provavelmente já existe um LiveZoomIt aberto. Use Ctrl+Shift+Q ou o Gerenciador de Tarefas. |
 | Apertei uma letra e nada aconteceu | Fora do modo desenho as teclas vão para os outros programas. Entre com Ctrl+2. Durante a digitação de um texto, as letras vão para o texto. |
 | Os traços continuam na tela depois de sair do desenho | É intencional. Entre no modo desenho e aperte **E**. |
@@ -206,10 +250,14 @@ O executável fica em `LiveZoomIt/publish/LiveZoomIt.exe`.
 | Arquivo | Conteúdo |
 |---|---|
 | `LiveZoomIt/MainWindow.xaml(.cs)` | Janela transparente, modos, atalhos globais |
-| `LiveZoomIt/MainWindow.Drawing.cs` | Ferramentas de desenho, teclado, texto, captura |
+| `LiveZoomIt/MainWindow.Drawing.cs` | Ferramentas de desenho, laser, marcadores, borracha, teclado, texto, captura |
+| `LiveZoomIt/MainWindow.Effects.cs` | Holofote e destaque de cliques |
 | `LiveZoomIt/Drawing/ShapeBuilder.cs` | Geometria das formas e encaixe de ângulos |
-| `LiveZoomIt/Drawing/UndoStack.cs` | Desfazer / refazer por ação |
+| `LiveZoomIt/Drawing/UndoStack.cs` | Desfazer / refazer por ação, incluindo borracha e "apagar tudo" |
+| `LiveZoomIt/Drawing/LaserFade.cs` | Tempo de desaparecimento do laser |
+| `LiveZoomIt/Drawing/StepMarker.cs` | Marcadores numerados |
 | `LiveZoomIt/MagnifierWindow.cs` | Lupa em tempo real |
+| `LiveZoomIt/SpotlightWindow.cs` | Holofote |
 | `LiveZoomIt/ScreenCapture.cs` | Copiar / salvar a tela anotada |
 | `LiveZoomIt/Native.cs` | Chamadas à API do Windows (Win32) |
 | `LiveZoomIt.Tests/` | Testes automatizados (xUnit) |
@@ -221,3 +269,5 @@ O executável fica em `LiveZoomIt/publish/LiveZoomIt.exe`.
 - No modo desenho, esse estilo é removido e um `InkCanvas` recebe o mouse.
 - As formas são geradas como traços de tinta comuns, por isso cor, espessura, desfazer e "apagar tudo" funcionam igual para tudo.
 - A lupa copia a região sob o cursor a cada quadro e se exclui da captura (`WDA_EXCLUDEFROMCAPTURE`) para não ampliar a si mesma.
+- O holofote é uma janela preta semitransparente com um "furo" circular recortado por região de janela (`SetWindowRgn`), atualizado só quando o cursor se move.
+- O destaque de cliques usa um hook global de mouse (`WH_MOUSE_LL`), ativo apenas enquanto o recurso estiver ligado.

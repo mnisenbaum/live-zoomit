@@ -9,7 +9,7 @@ public interface IUndoableAction
     void Redo();
 }
 
-/// <summary>Desfazer/refazer por ação (um traço, uma forma, um texto ou um "limpar tudo").</summary>
+/// <summary>Desfazer/refazer por ação (traço, forma, texto, marcador, borracha ou "limpar tudo").</summary>
 public sealed class UndoStack
 {
     private readonly Stack<IUndoableAction> _undo = new();
@@ -55,6 +55,45 @@ public sealed class ElementAddedAction(IList children, object element) : IUndoab
 {
     public void Undo() => children.Remove(element);
     public void Redo() => children.Add(element);
+}
+
+/// <summary>Uma passada da borracha (botão direito): tudo o que ela tocou some e volta junto no desfazer.</summary>
+public sealed class EraseAction(StrokeCollection strokes, IList children) : IUndoableAction
+{
+    private readonly List<Stroke> _erasedStrokes = [];
+    private readonly List<object> _erasedChildren = [];
+
+    public bool IsEmpty => _erasedStrokes.Count == 0 && _erasedChildren.Count == 0;
+
+    public void EraseStroke(Stroke stroke)
+    {
+        if (strokes.Remove(stroke))
+            _erasedStrokes.Add(stroke);
+    }
+
+    public void EraseChild(object child)
+    {
+        if (!children.Contains(child))
+            return;
+        children.Remove(child);
+        _erasedChildren.Add(child);
+    }
+
+    public void Undo()
+    {
+        foreach (var stroke in _erasedStrokes)
+            strokes.Add(stroke);
+        foreach (var child in _erasedChildren)
+            children.Add(child);
+    }
+
+    public void Redo()
+    {
+        foreach (var stroke in _erasedStrokes)
+            strokes.Remove(stroke);
+        foreach (var child in _erasedChildren)
+            children.Remove(child);
+    }
 }
 
 /// <summary>"Limpar tudo" reversível. Guarda o conteúdo atual; <see cref="Redo"/> executa a limpeza.</summary>
