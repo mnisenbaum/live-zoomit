@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using LiveZoomIt.Settings;
 using Microsoft.Win32;
 
 namespace LiveZoomIt;
@@ -12,28 +13,15 @@ namespace LiveZoomIt;
 /// Overlay transparente sobre toda a tela virtual. No modo passivo é click-through
 /// (WS_EX_TRANSPARENT); no modo desenho recebe mouse/teclado e o InkCanvas captura os traços.
 /// A tela por baixo nunca é congelada: nada é capturado, apenas desenhado por cima.
-/// As ferramentas de desenho ficam em MainWindow.Drawing.cs; holofote e destaque de cliques em MainWindow.Effects.cs.
+/// Demais partes: MainWindow.Drawing.cs (ferramentas), MainWindow.Effects.cs (holofote, cliques, zoom da lupa),
+/// MainWindow.Keystrokes.cs (exibição de teclas), MainWindow.Settings.cs e MainWindow.Tray.cs.
 /// </summary>
 public partial class MainWindow : Window
 {
-    private const int HotkeyToggleDraw = 1;
-    private const int HotkeyToggleMagnifier = 2;
-    private const int HotkeyQuit = 3;
-    private const int HotkeyToggleSpotlight = 4;
-    private const int HotkeyToggleClickHighlights = 5;
-
-    private static readonly (int Id, uint Modifiers, uint Key, string Name)[] Hotkeys =
-    [
-        (HotkeyToggleDraw, Native.MOD_CONTROL, 0x32, "Ctrl+2"),
-        (HotkeyToggleMagnifier, Native.MOD_CONTROL, 0x31, "Ctrl+1"),
-        (HotkeyToggleSpotlight, Native.MOD_CONTROL, 0x33, "Ctrl+3"),
-        (HotkeyToggleClickHighlights, Native.MOD_CONTROL, 0x34, "Ctrl+4"),
-        (HotkeyQuit, Native.MOD_CONTROL | Native.MOD_SHIFT, 0x51, "Ctrl+Shift+Q"),
-    ];
-
     // Alfa 1/255: invisível, mas faz a janela em camadas receber cliques sobre áreas "vazias".
     private static readonly Brush HitTestableTransparent = CreateFrozenBrush(Color.FromArgb(1, 0, 0, 0));
 
+    private readonly HashSet<HotkeyAction> _registeredHotkeys = [];
     private IntPtr _hwnd;
     private HwndSource? _source;
     private bool _drawing;
@@ -44,6 +32,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        LoadSettings(initial: true);
         InitializeDrawing();
 
         CoverVirtualScreen();
@@ -62,7 +51,8 @@ public partial class MainWindow : Window
 
         CoverVirtualScreen();
         SetPassiveMode();
-        RegisterHotKeys();
+        RegisterHotKeys(initial: true);
+        CreateTrayIcon();
     }
 
     protected override void OnClosing(CancelEventArgs e)
@@ -80,15 +70,14 @@ public partial class MainWindow : Window
     protected override void OnClosed(EventArgs e)
     {
         SystemEvents.DisplaySettingsChanged -= OnDisplaySettingsChanged;
-        if (_hwnd != IntPtr.Zero)
-        {
-            foreach (var hotkey in Hotkeys)
-                Native.UnregisterHotKey(_hwnd, hotkey.Id);
-        }
+        UnregisterHotKeys();
         _source?.RemoveHook(WndProc);
         RemoveMouseHook();
+        RemoveKeyboardHook();
         _magnifier?.Close();
         _spotlight?.Dispose();
+        _keystrokes?.Close();
+        DisposeTrayIcon();
         base.OnClosed(e);
     }
 
@@ -98,25 +87,60 @@ public partial class MainWindow : Window
         Application.Current.Shutdown();
     }
 
-    private void RegisterHotKeys()
+    // ---------------------------------------------------------------- atalhos globais
+
+    private static int HotkeyId(HotkeyAction action) => (int)action + 1;
+
+    private void UnregisterHotKeys()
     {
+        foreach (var action in _registeredHotkeys)
+            Native.UnregisterHotKey(_hwnd, HotkeyId(action));
+        _registeredHotkeys.Clear();
+    }
+
+    private void RegisterHotKeys(bool initial)
+    {
+        if (_hwnd == IntPtr.Zero)
+            return;
+
+        UnregisterHotKeys();
         var failed = new List<string>();
-        foreach (var hotkey in Hotkeys)
+        foreach (var (action, hotkey) in _config.Hotkeys)
         {
-            if (!Native.RegisterHotKey(_hwnd, hotkey.Id, hotkey.Modifiers | Native.MOD_NOREPEAT, hotkey.Key))
-                failed.Add(hotkey.Name);
+            if (Native.RegisterHotKey(_hwnd, HotkeyId(action), hotkey.Modifiers | Native.MOD_NOREPEAT, hotkey.VirtualKey))
+                _registeredHotkeys.Add(action);
+            else
+                failed.Add(hotkey.Display);
         }
 
-        if (failed.Count == Hotkeys.Length)
+        if (failed.Count == 0)
+            return;
+
+        if (initial && _registeredHotkeys.Count == 0)
         {
             MessageBox.Show("Nenhum atalho global pôde ser registrado (o LiveZoomIt já está em execução?).",
                 "LiveZoomIt", MessageBoxButton.OK, MessageBoxImage.Error);
             Quit();
+            return;
         }
-        else if (failed.Count > 0)
+
+        string message = $"Atalhos em uso por outro programa: {string.Join(", ", failed)}.";
+        if (initial)
+            MessageBox.Show(message, "LiveZoomIt", MessageBoxButton.OK, MessageBoxImage.Warning);
+        else
+            ShowToast(message, 6);
+    }
+
+    private void RunHotkey(HotkeyAction action)
+    {
+        switch (action)
         {
-            MessageBox.Show($"Atalhos em uso por outro programa: {string.Join(", ", failed)}.",
-                "LiveZoomIt", MessageBoxButton.OK, MessageBoxImage.Warning);
+            case HotkeyAction.ToggleDraw: ToggleDrawMode(); break;
+            case HotkeyAction.ToggleMagnifier: ToggleMagnifier(); break;
+            case HotkeyAction.ToggleSpotlight: ToggleSpotlight(); break;
+            case HotkeyAction.ToggleClickHighlights: ToggleClickHighlights(); break;
+            case HotkeyAction.ToggleKeystrokes: ToggleKeystrokes(); break;
+            case HotkeyAction.Quit: Quit(); break;
         }
     }
 
@@ -125,24 +149,7 @@ public partial class MainWindow : Window
         switch (msg)
         {
             case Native.WM_HOTKEY:
-                switch (wParam.ToInt32())
-                {
-                    case HotkeyToggleDraw:
-                        if (_drawing) ExitDrawMode(); else EnterDrawMode();
-                        break;
-                    case HotkeyToggleMagnifier:
-                        ToggleMagnifier();
-                        break;
-                    case HotkeyToggleSpotlight:
-                        ToggleSpotlight();
-                        break;
-                    case HotkeyToggleClickHighlights:
-                        ToggleClickHighlights();
-                        break;
-                    case HotkeyQuit:
-                        Quit();
-                        break;
-                }
+                RunHotkey((HotkeyAction)(wParam.ToInt32() - 1));
                 handled = true;
                 break;
 
@@ -155,6 +162,11 @@ public partial class MainWindow : Window
     }
 
     // ---------------------------------------------------------------- modos
+
+    private void ToggleDrawMode()
+    {
+        if (_drawing) ExitDrawMode(); else EnterDrawMode();
+    }
 
     private void EnterDrawMode()
     {
@@ -206,14 +218,6 @@ public partial class MainWindow : Window
         Native.SetWindowLong(_hwnd, Native.GWL_EXSTYLE, exStyle);
         Native.SetWindowPos(_hwnd, Native.HWND_TOPMOST, 0, 0, 0, 0,
             Native.SWP_NOMOVE | Native.SWP_NOSIZE | Native.SWP_NOACTIVATE | Native.SWP_FRAMECHANGED);
-    }
-
-    // ---------------------------------------------------------------- lupa
-
-    private void ToggleMagnifier()
-    {
-        _magnifier ??= new MagnifierWindow();
-        if (_magnifier.IsRunning) _magnifier.Stop(); else _magnifier.Start();
     }
 
     // ---------------------------------------------------------------- geometria

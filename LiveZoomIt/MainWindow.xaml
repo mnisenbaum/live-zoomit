@@ -31,8 +31,8 @@
                                    Foreground="White" FontFamily="Segoe UI" FontSize="14" FontWeight="SemiBold" />
                         <Rectangle Width="1" Margin="12,2" Fill="#60FFFFFF" />
                         <StackPanel VerticalAlignment="Center">
-                            <TextBlock Foreground="#E0FFFFFF" FontFamily="Segoe UI" FontSize="12"
-                                       Text="R G B Y O P cor  ·  Shift+cor marca-texto  ·  L laser  ·  T texto  ·  N números  ·  Ctrl+roda tamanho  ·  W / K quadro" />
+                            <!-- Preenchido em código com as teclas de cor configuradas. -->
+                            <TextBlock x:Name="ColorKeysHint" Foreground="#E0FFFFFF" FontFamily="Segoe UI" FontSize="12" />
                             <TextBlock Foreground="#E0FFFFFF" FontFamily="Segoe UI" FontSize="12"
                                        Text="Arrastar com Ctrl retângulo · Shift linha · Alt elipse · Ctrl+Shift seta  ·  Botão direito apaga  ·  E limpar tudo" />
                             <TextBlock Foreground="#E0FFFFFF" FontFamily="Segoe UI" FontSize="12"

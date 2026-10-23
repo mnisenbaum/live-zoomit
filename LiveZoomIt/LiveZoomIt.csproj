@@ -6,9 +6,18 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <!-- Só para o ícone na área de notificação (NotifyIcon); já faz parte do runtime publicado. -->
+    <UseWindowsForms>true</UseWindowsForms>
     <!-- Reduz o .exe single-file (só tem efeito em publish self-contained). -->
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <DebugType Condition="'$(Configuration)' == 'Release'">none</DebugType>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Os usings implícitos do WinForms colidem com os tipos do WPF (Point, Color, Application…);
+         o único arquivo que usa WinForms (MainWindow.Tray.cs) importa com apelidos. -->
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
 
 </Project>

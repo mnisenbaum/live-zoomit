@@ -3,19 +3,33 @@
 Ferramenta de anotação de tela para Windows, inspirada no ZoomIt (Sysinternals / PowerToys), com uma diferença principal: **a tela nunca congela**. Você desenha por cima da tela viva — vídeos, chamadas, navegadores e terminais continuam rodando por baixo dos traços.
 
 - Um único `LiveZoomIt.exe` portátil, sem instalação e sem precisar do .NET instalado.
-- Roda em segundo plano, sem janela, sem ícone na barra de tarefas e sem ícone na bandeja.
+- Roda em segundo plano, sem janela; fica só um ícone de lupa na área de notificação (perto do relógio).
 - Cobre todos os monitores.
 
 ---
 
 ## Início rápido
 
-1. Execute `LiveZoomIt.exe`. **Nada aparece** — é esperado. Ele fica aguardando os atalhos.
-2. Aperte **Ctrl+2** para entrar no modo desenho e arraste com o mouse para riscar a tela.
+1. Execute `LiveZoomIt.exe`. Nenhuma janela abre — aparece só o **ícone de lupa azul** na área de notificação. (Se não o vir, clique na setinha **^** ao lado do relógio.)
+2. Aperte **Ctrl+2** (ou dê dois cliques no ícone) para entrar no modo desenho e arraste com o mouse para riscar a tela.
 3. Aperte **Esc** (ou **Ctrl+2** de novo) para voltar a usar o computador normalmente.
-4. Aperte **Ctrl+Shift+Q** para fechar o programa.
+4. Aperte **Ctrl+Shift+Q** (ou use **Sair** no menu do ícone) para fechar o programa.
 
-> Para saber se ele está rodando, procure `LiveZoomIt` no Gerenciador de Tarefas.
+---
+
+## Ícone na área de notificação
+
+Clique com o **botão direito** no ícone de lupa para abrir o menu:
+
+| Item | O que faz |
+|---|---|
+| Modo desenho, Lupa, Holofote, Destaque de cliques, Mostrar teclas | Liga / desliga o recurso. O item fica marcado (✓) quando está ligado, e o atalho atual aparece à direita. |
+| Abrir pasta de capturas | Abre no Explorer a pasta onde o **Ctrl+S** salva as imagens. |
+| Editar configurações… | Abre o `settings.json` (veja [Configurações](#configurações)). |
+| Recarregar configurações | Aplica o que você mudou no `settings.json` sem reiniciar o programa. |
+| Sair | Fecha o LiveZoomIt. |
+
+**Dois cliques** no ícone ligam / desligam o modo desenho.
 
 ---
 
@@ -40,9 +54,10 @@ Funcionam em qualquer programa, a qualquer momento.
 | **Ctrl+1** | Liga / desliga a lupa |
 | **Ctrl+3** | Liga / desliga o holofote |
 | **Ctrl+4** | Liga / desliga o destaque de cliques |
+| **Ctrl+5** | Liga / desliga a exibição de teclas |
 | **Ctrl+Shift+Q** | Fecha o LiveZoomIt |
 
-> Enquanto o LiveZoomIt estiver aberto, **Ctrl+1** a **Ctrl+4** ficam reservados para ele em todo o sistema (por exemplo, deixam de trocar de aba no navegador).
+> Enquanto o LiveZoomIt estiver aberto, **Ctrl+1** a **Ctrl+5** ficam reservados para ele em todo o sistema (por exemplo, deixam de trocar de aba no navegador). Todos esses atalhos podem ser trocados ou desativados nas [Configurações](#configurações).
 
 ---
 
@@ -74,6 +89,8 @@ A forma é escolhida pela tecla que está **segurada no momento em que você ape
 | **Y** | Amarelo | Marca-texto amarelo |
 | **O** | Laranja | Marca-texto laranja |
 | **P** | Rosa | Marca-texto rosa |
+
+As cores e suas teclas podem ser trocadas, removidas ou acrescentadas nas [Configurações](#configurações).
 
 - O **marca-texto** é largo e semitransparente, para destacar sem esconder o que está por baixo. Ele tem 3× a espessura da caneta (mínimo de 12 px).
 - Apertar uma cor **sem** Shift sai do marca-texto e volta para a caneta normal (ou continua no laser, se ele estiver ligado).
@@ -150,7 +167,7 @@ Cada traço, forma, texto, marcador, passada de borracha ou "apagar tudo" conta 
 | **Ctrl+S** | Salva essa imagem em PNG |
 
 - A imagem é do **monitor onde está o cursor**, já com os traços. A barra de dica não sai na imagem.
-- Os arquivos vão para `Imagens\LiveZoomIt\`, com nomes como `LiveZoomIt_20261022_213811_541.png`. Não há janela de "Salvar como"; um aviso no topo da tela mostra onde o arquivo foi salvo.
+- Os arquivos vão para `Imagens\LiveZoomIt\` (ou a pasta definida em `CaptureFolder`), com nomes como `LiveZoomIt_20261022_213811_541.png`. Não há janela de "Salvar como"; um aviso no topo da tela mostra onde o arquivo foi salvo. A pasta pode ser aberta pelo menu do ícone.
 
 ### Sair do modo desenho
 
@@ -164,7 +181,9 @@ Cada traço, forma, texto, marcador, passada de borracha ou "apagar tudo" conta 
 
 ## Lupa (Ctrl+1)
 
-- Mostra uma ampliação de **2×** da região sob o cursor, numa janela de cantos arredondados que acompanha o mouse em tempo real.
+- Mostra uma ampliação da região sob o cursor (**2×** ao abrir), numa janela de cantos arredondados que acompanha o mouse em tempo real.
+- **Ctrl+Alt + roda do mouse** muda a ampliação entre 1,5×, 2×, 3×, 4×, 6× e 8×; o valor aparece no canto da lupa. Enquanto a lupa estiver ligada, esse gesto não chega aos outros programas.
+- O tamanho da lupa e a ampliação inicial podem ser definidos nas [Configurações](#configurações).
 - Funciona nos dois modos e mostra também as anotações.
 - Não atrapalha os cliques: você pode clicar e desenhar "através" dela.
 - Normalmente fica centralizada no cursor. Em versões do Windows que não permitem esconder a lupa da captura de tela, ela aparece deslocada para baixo e para a direita do cursor, para não se ampliar a si mesma.
@@ -188,10 +207,73 @@ Cada traço, forma, texto, marcador, passada de borracha ou "apagar tudo" conta 
 
 ---
 
+## Exibição de teclas (Ctrl+5)
+
+- Mostra as teclas que você aperta em etiquetas no rodapé do monitor principal — útil para gravar tutoriais ou apresentar atalhos.
+- Texto digitado em sequência aparece junto numa etiqueta só ("olá mundo"); combinações aparecem como **Ctrl + Shift + T**; a mesma combinação repetida ganha um contador (**Ctrl + Z ×3**).
+- Teclas especiais têm nomes curtos: Enter, Esc, Backspace, Tab, ↑ ↓ ← →, F1–F24 etc. Ctrl, Shift e Alt sozinhos não aparecem.
+- Com Shift, números e símbolos aparecem como combinação (**Shift + 1**), porque o símbolo resultante depende do layout do teclado.
+- As etiquetas somem cerca de 2,5 segundos após a última tecla; no máximo 4 ficam visíveis.
+
+> ⚠️ **Cuidado com senhas:** tudo o que você digita aparece na tela, inclusive em campos de senha. Desligue (Ctrl+5) antes de digitar algo sigiloso.
+
+---
+
+## Configurações
+
+As configurações ficam em `%APPDATA%\LiveZoomIt\settings.json`, criado com os valores padrão na primeira execução. Para editar, use **Editar configurações…** no menu do ícone; depois de salvar, use **Recarregar configurações** (ou reinicie o programa).
+
+```jsonc
+{
+  "Hotkeys": {
+    "ToggleDraw": "Ctrl+2",
+    "ToggleMagnifier": "Ctrl+1",
+    "ToggleSpotlight": "Ctrl+3",
+    "ToggleClickHighlights": "Ctrl+4",
+    "ToggleKeystrokes": "Ctrl+5",
+    "Quit": "Ctrl+Shift+Q"
+  },
+  "Colors": {
+    "R": "#FF0000",
+    "G": "#00D000",
+    "B": "#0060FF",
+    "Y": "#FFE000",
+    "O": "#FF8C00",
+    "P": "#FF3EA5"
+  },
+  "StartColor": "R",
+  "PenWidth": 4,
+  "FontSize": 28,
+  "Magnifier": { "Width": 420, "Height": 260, "Zoom": 2 },
+  "Spotlight": { "Radius": 160, "Dim": 0.67 },
+  "Laser": { "HoldSeconds": 1.0, "FadeSeconds": 0.5 },
+  "CaptureFolder": ""
+}
+```
+
+| Campo | Significado | Valores aceitos |
+|---|---|---|
+| `Hotkeys.*` | Atalhos globais | Modificadores `Ctrl`, `Alt`, `Shift`, `Win` + uma tecla (`A`–`Z`, `0`–`9`, `F1`–`F24`, nomes como `Home`, `PageUp`), ex.: `"Ctrl+Alt+D"`. Uma tecla de função pode ser usada sozinha (`"F9"`). Texto vazio (`""`) desativa o atalho — exceto `Quit`. |
+| `Colors` | Tecla → cor do modo desenho | Tecla: uma letra, exceto **L, T, N, W, K, E** (já usadas). Cor: `#RRGGBB` ou um nome em inglês (`"Purple"`, `"Cyan"`). Você pode remover ou acrescentar cores. |
+| `StartColor` | Cor inicial | Uma das teclas de `Colors`. |
+| `PenWidth` | Espessura inicial da caneta | 1 a 40 (arredondada para a espessura disponível mais próxima). |
+| `FontSize` | Tamanho inicial do texto e dos números | 12 a 120. |
+| `Magnifier` | Tamanho da lupa e ampliação inicial | `Width` 100–1600, `Height` 80–1200, `Zoom` 1,5–8. |
+| `Spotlight` | Holofote | `Radius` (raio do círculo) 40–800; `Dim` (escurecimento) 0,1–0,95. |
+| `Laser` | Tempo da caneta laser | `HoldSeconds` (tempo visível) 0–10; `FadeSeconds` (tempo sumindo) 0,1–5. |
+| `CaptureFolder` | Pasta das capturas (Ctrl+S) | Caminho completo, ex.: `"D:\\Capturas"` (barras duplicadas no JSON); aceita `%USERPROFILE%`. Vazio = `Imagens\LiveZoomIt`. |
+
+- Comentários (`//`) e vírgula sobrando no fim são aceitos, e maiúsculas/minúsculas nos nomes dos campos não importam.
+- Um valor inválido **nunca impede o programa de abrir**: ele volta ao padrão (ou ao limite mais próximo) e um aviso aparece no topo da tela.
+- Para voltar a todas as configurações padrão, apague o `settings.json`; ele é recriado na próxima execução.
+
+---
+
 ## Referência rápida
 
 ```
-GLOBAIS        Ctrl+2 desenho · Ctrl+1 lupa · Ctrl+3 holofote · Ctrl+4 cliques · Ctrl+Shift+Q sair
+GLOBAIS        Ctrl+2 desenho · Ctrl+1 lupa · Ctrl+3 holofote · Ctrl+4 cliques · Ctrl+5 teclas · Ctrl+Shift+Q sair
+LUPA           Ctrl+Alt+roda muda a ampliação
 
 FORMAS         arrastar: livre · Ctrl: retângulo · Shift: linha · Alt: elipse · Ctrl+Shift: seta
 CORES          R G B Y O P (caneta) · Shift+cor (marca-texto) · L laser
@@ -210,7 +292,9 @@ SAIR           Esc · Ctrl+2
 
 | Sintoma | Causa e solução |
 |---|---|
-| Aviso "Atalhos em uso por outro programa" | Outro programa já usa Ctrl+1, Ctrl+2, Ctrl+3, Ctrl+4 ou Ctrl+Shift+Q. Os atalhos livres continuam funcionando; feche o outro programa e reabra o LiveZoomIt. |
+| Aviso "Atalhos em uso por outro programa" | Outro programa já usa algum dos atalhos. Os atalhos livres continuam funcionando; troque o atalho em conflito nas [Configurações](#configurações) ou feche o outro programa. |
+| Aviso "Configurações: …" no topo da tela | Algum valor do `settings.json` é inválido e foi trocado pelo padrão. O aviso diz qual campo; corrija e use **Recarregar configurações**. |
+| Não acho o ícone | Ele pode estar escondido: clique na setinha **^** ao lado do relógio. Você pode arrastá-lo para ficar sempre visível. |
 | Aviso "Nenhum atalho global pôde ser registrado" e o programa fecha | Provavelmente já existe um LiveZoomIt aberto. Use Ctrl+Shift+Q ou o Gerenciador de Tarefas. |
 | Apertei uma letra e nada aconteceu | Fora do modo desenho as teclas vão para os outros programas. Entre com Ctrl+2. Durante a digitação de um texto, as letras vão para o texto. |
 | Os traços continuam na tela depois de sair do desenho | É intencional. Entre no modo desenho e aperte **E**. |
@@ -251,7 +335,14 @@ O executável fica em `LiveZoomIt/publish/LiveZoomIt.exe`.
 |---|---|
 | `LiveZoomIt/MainWindow.xaml(.cs)` | Janela transparente, modos, atalhos globais |
 | `LiveZoomIt/MainWindow.Drawing.cs` | Ferramentas de desenho, laser, marcadores, borracha, teclado, texto, captura |
-| `LiveZoomIt/MainWindow.Effects.cs` | Holofote e destaque de cliques |
+| `LiveZoomIt/MainWindow.Effects.cs` | Holofote, destaque de cliques e zoom da lupa (hook de mouse) |
+| `LiveZoomIt/MainWindow.Keystrokes.cs` | Exibição de teclas (hook de teclado) |
+| `LiveZoomIt/MainWindow.Settings.cs` | Leitura e aplicação das configurações |
+| `LiveZoomIt/MainWindow.Tray.cs` | Ícone e menu na área de notificação |
+| `LiveZoomIt/Settings/` | Modelo do `settings.json`, validação e leitura de atalhos |
+| `LiveZoomIt/Keystrokes/` | Formatação e agrupamento das teclas exibidas |
+| `LiveZoomIt/KeystrokeWindow.cs` | Janela das etiquetas de teclas |
+| `LiveZoomIt/MagnifierZoom.cs` | Níveis de ampliação da lupa |
 | `LiveZoomIt/Drawing/ShapeBuilder.cs` | Geometria das formas e encaixe de ângulos |
 | `LiveZoomIt/Drawing/UndoStack.cs` | Desfazer / refazer por ação, incluindo borracha e "apagar tudo" |
 | `LiveZoomIt/Drawing/LaserFade.cs` | Tempo de desaparecimento do laser |
@@ -270,4 +361,6 @@ O executável fica em `LiveZoomIt/publish/LiveZoomIt.exe`.
 - As formas são geradas como traços de tinta comuns, por isso cor, espessura, desfazer e "apagar tudo" funcionam igual para tudo.
 - A lupa copia a região sob o cursor a cada quadro e se exclui da captura (`WDA_EXCLUDEFROMCAPTURE`) para não ampliar a si mesma.
 - O holofote é uma janela preta semitransparente com um "furo" circular recortado por região de janela (`SetWindowRgn`), atualizado só quando o cursor se move.
-- O destaque de cliques usa um hook global de mouse (`WH_MOUSE_LL`), ativo apenas enquanto o recurso estiver ligado.
+- O destaque de cliques e o zoom da lupa compartilham um hook global de mouse (`WH_MOUSE_LL`), instalado apenas enquanto um dos dois estiver ligado.
+- A exibição de teclas usa um hook global de teclado (`WH_KEYBOARD_LL`), ativo só enquanto ligada. O caractere vem de `MapVirtualKey`, que — ao contrário de `ToUnicode` — não interfere nos acentos que você está digitando. As etiquetas ficam numa janela pequena própria, para não redesenhar o overlay de tela cheia a cada tecla.
+- O ícone da área de notificação usa o `NotifyIcon` do Windows Forms e é desenhado em tempo de execução.

@@ -109,19 +109,8 @@ public partial class MainWindow
         ApplyPenAttributes();
     }
 
-    private static bool TryGetPenColor(Key key, out Color color)
-    {
-        switch (key)
-        {
-            case Key.R: color = Colors.Red; return true;
-            case Key.G: color = Color.FromRgb(0x00, 0xD0, 0x00); return true;
-            case Key.B: color = Color.FromRgb(0x00, 0x60, 0xFF); return true;
-            case Key.Y: color = Color.FromRgb(0xFF, 0xE0, 0x00); return true;
-            case Key.O: color = Color.FromRgb(0xFF, 0x8C, 0x00); return true;
-            case Key.P: color = Color.FromRgb(0xFF, 0x3E, 0xA5); return true;
-            default: color = default; return false;
-        }
-    }
+    /// <summary>Cores vêm de settings.json (padrão: R G B Y O P).</summary>
+    private bool TryGetPenColor(Key key, out Color color) => _colors.TryGetValue(key, out color);
 
     private void StepSize(int direction)
     {
@@ -199,10 +188,12 @@ public partial class MainWindow
     private void FadeLaserStrokes()
     {
         TimeSpan now = _laserClock.Elapsed;
+        var hold = TimeSpan.FromSeconds(_config.Settings.Laser.HoldSeconds);
+        var fade = TimeSpan.FromSeconds(_config.Settings.Laser.FadeSeconds);
         for (int i = _laserStrokes.Count - 1; i >= 0; i--)
         {
             var laser = _laserStrokes[i];
-            double opacity = LaserFade.Opacity(now - laser.CompletedAt);
+            double opacity = LaserFade.Opacity(now - laser.CompletedAt, hold, fade);
             if (opacity <= 0)
             {
                 Ink.Strokes.Remove(laser.Stroke);
@@ -606,7 +597,7 @@ public partial class MainWindow
             var image = ScreenCapture.CaptureMonitorUnderCursor();
             if (save)
             {
-                ShowToast($"Salvo em {ScreenCapture.SavePng(image)}");
+                ShowToast($"Salvo em {ScreenCapture.SavePng(image, CaptureFolder)}");
             }
             else
             {
@@ -625,11 +616,12 @@ public partial class MainWindow
         }
     }
 
-    private void ShowToast(string message)
+    private void ShowToast(string message, double seconds = 2.5)
     {
         ToastText.Text = message;
         Toast.Visibility = Visibility.Visible;
         _toastTimer.Stop();
+        _toastTimer.Interval = TimeSpan.FromSeconds(seconds);
         _toastTimer.Start();
     }
 }

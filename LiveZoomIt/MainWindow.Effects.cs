@@ -8,8 +8,9 @@ using System.Windows.Shapes;
 namespace LiveZoomIt;
 
 /// <summary>
-/// Efeitos que funcionam também fora do modo desenho: holofote (Ctrl+3) e
-/// destaque de cliques (Ctrl+4), que mostra um anel onde o mouse é clicado.
+/// Efeitos que funcionam também fora do modo desenho: holofote (Ctrl+3), destaque de cliques (Ctrl+4)
+/// e o ajuste de zoom da lupa com Ctrl+Alt+roda. Os dois últimos usam um único hook global de mouse,
+/// instalado só enquanto algum deles precisa.
 /// </summary>
 public partial class MainWindow
 {
@@ -18,29 +19,51 @@ public partial class MainWindow
     private static readonly Brush RightClickBrush = CreateFrozenBrush(Color.FromRgb(0x33, 0x99, 0xFF));
 
     private SpotlightWindow? _spotlight;
+    private bool _clickHighlights;
     private IntPtr _mouseHook;
-    private Native.LowLevelMouseProc? _mouseHookProc; // mantém o delegate vivo enquanto o hook existir
+    private Native.LowLevelHookProc? _mouseHookProc; // mantém o delegate vivo enquanto o hook existir
 
     private void ToggleSpotlight()
     {
-        _spotlight ??= new SpotlightWindow();
+        var spotlight = _config.Settings.Spotlight;
+        _spotlight ??= new SpotlightWindow(spotlight.Radius, spotlight.Dim);
         if (_spotlight.IsRunning) _spotlight.Stop(); else _spotlight.Start();
+    }
+
+    private void ToggleMagnifier()
+    {
+        _magnifier ??= new MagnifierWindow(_config.Settings.Magnifier);
+        if (_magnifier.IsRunning) _magnifier.Stop(); else _magnifier.Start();
+        UpdateMouseHook();
     }
 
     private void ToggleClickHighlights()
     {
-        if (_mouseHook != IntPtr.Zero)
+        _clickHighlights = !_clickHighlights;
+        if (!UpdateMouseHook())
         {
-            RemoveMouseHook();
-            ShowToast("Destaque de cliques desligado");
+            _clickHighlights = false;
+            ShowToast("Não foi possível ativar o destaque de cliques");
             return;
         }
+        ShowToast(_clickHighlights ? "Destaque de cliques ligado" : "Destaque de cliques desligado");
+    }
+
+    /// <summary>Instala ou remove o hook conforme a necessidade; false se a instalação falhou.</summary>
+    private bool UpdateMouseHook()
+    {
+        bool needed = _clickHighlights || _magnifier?.IsRunning == true;
+        if (!needed)
+        {
+            RemoveMouseHook();
+            return true;
+        }
+        if (_mouseHook != IntPtr.Zero)
+            return true;
 
         _mouseHookProc ??= OnLowLevelMouse;
         _mouseHook = Native.SetWindowsHookEx(Native.WH_MOUSE_LL, _mouseHookProc, Native.GetModuleHandle("user32.dll"), 0);
-        ShowToast(_mouseHook != IntPtr.Zero
-            ? "Destaque de cliques ligado"
-            : "Não foi possível ativar o destaque de cliques");
+        return _mouseHook != IntPtr.Zero;
     }
 
     private void RemoveMouseHook()
@@ -53,15 +76,25 @@ public partial class MainWindow
 
     /// <summary>
     /// Hook global de mouse. Roda na thread da interface a cada evento de mouse do sistema,
-    /// então só lê o clique e agenda o anel; nunca bloqueia.
+    /// então só lê o evento e agenda o trabalho; nunca bloqueia.
     /// </summary>
     private IntPtr OnLowLevelMouse(int nCode, IntPtr wParam, IntPtr lParam)
     {
-        // No modo desenho os cliques são traços: o anel só atrapalharia.
-        if (nCode >= 0 && !_drawing)
+        if (nCode >= 0)
         {
             int message = wParam.ToInt32();
-            if (message is Native.WM_LBUTTONDOWN or Native.WM_RBUTTONDOWN)
+
+            if (message == Native.WM_MOUSEWHEEL && _magnifier?.IsRunning == true
+                && Native.IsKeyDown(Native.VK_CONTROL) && Native.IsKeyDown(Native.VK_MENU))
+            {
+                var wheel = Marshal.PtrToStructure<Native.MSLLHOOKSTRUCT>(lParam);
+                int direction = (short)(wheel.mouseData >> 16) > 0 ? 1 : -1;
+                Dispatcher.InvokeAsync(() => _magnifier?.StepZoom(direction));
+                return 1; // consome a roda: a janela embaixo do cursor não deve rolar nem dar zoom
+            }
+
+            // No modo desenho os cliques são traços: o anel só atrapalharia.
+            if (_clickHighlights && !_drawing && message is Native.WM_LBUTTONDOWN or Native.WM_RBUTTONDOWN)
             {
                 var info = Marshal.PtrToStructure<Native.MSLLHOOKSTRUCT>(lParam);
                 bool right = message == Native.WM_RBUTTONDOWN;

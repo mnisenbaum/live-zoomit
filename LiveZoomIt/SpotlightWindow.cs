@@ -14,9 +14,9 @@ namespace LiveZoomIt;
 internal sealed class SpotlightWindow : IDisposable
 {
     private const string ClassName = "LiveZoomItSpotlight";
-    private const double RadiusDip = 160;
-    private const byte DimAlpha = 170;
 
+    private readonly double _radiusDip;
+    private readonly byte _dimAlpha;
     private IntPtr _hwnd;
     private int _originX;
     private int _originY;
@@ -25,6 +25,14 @@ internal sealed class SpotlightWindow : IDisposable
     private Native.POINT _lastCursor;
 
     public bool IsRunning { get; private set; }
+
+    /// <param name="radiusDip">Raio do círculo claro, em pixels lógicos (96 dpi).</param>
+    /// <param name="dim">Escurecimento fora do círculo, de 0 (nenhum) a 1 (preto).</param>
+    public SpotlightWindow(double radiusDip, double dim)
+    {
+        _radiusDip = radiusDip;
+        _dimAlpha = (byte)Math.Round(Math.Clamp(dim, 0, 1) * 255);
+    }
 
     public void Start()
     {
@@ -94,7 +102,7 @@ internal sealed class SpotlightWindow : IDisposable
         if (_hwnd == IntPtr.Zero)
             throw new Win32Exception(Marshal.GetLastWin32Error());
 
-        Native.SetLayeredWindowAttributes(_hwnd, 0, DimAlpha, Native.LWA_ALPHA);
+        Native.SetLayeredWindowAttributes(_hwnd, 0, _dimAlpha, Native.LWA_ALPHA);
     }
 
     private void OnRendering(object? sender, EventArgs e) => UpdateHole();
@@ -105,7 +113,7 @@ internal sealed class SpotlightWindow : IDisposable
             return;
         _lastCursor = cursor;
 
-        int r = (int)Math.Round(RadiusDip * Native.GetDpiForWindow(_hwnd) / 96.0);
+        int r = (int)Math.Round(_radiusDip * Native.GetDpiForWindow(_hwnd) / 96.0);
         int cx = cursor.X - _originX;
         int cy = cursor.Y - _originY;
 

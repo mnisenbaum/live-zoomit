@@ -46,10 +46,12 @@ internal static class ScreenCapture
         }
     }
 
-    /// <summary>Salva em Imagens\LiveZoomIt e devolve o caminho do arquivo.</summary>
-    public static string SavePng(BitmapSource image)
+    public static readonly string DefaultFolder =
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "LiveZoomIt");
+
+    /// <summary>Salva na pasta indicada e devolve o caminho do arquivo.</summary>
+    public static string SavePng(BitmapSource image, string folder)
     {
-        string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "LiveZoomIt");
         Directory.CreateDirectory(folder);
         string path = Path.Combine(folder, $"LiveZoomIt_{DateTime.Now:yyyyMMdd_HHmmss_fff}.png");
 
