@@ -402,6 +402,12 @@ O executável fica em `LiveZoomIt/publish/LiveZoomIt.exe`.
 
 ---
 
+## Licença
+
+[MIT](LICENSE): você pode usar, copiar, modificar e redistribuir o LiveZoomIt livremente, inclusive em projetos comerciais, desde que mantenha o aviso de copyright e a licença. O software é fornecido "como está", sem garantias.
+
+---
+
 ## Aviso
 
 O LiveZoomIt é um projeto independente, sem nenhuma relação com a Microsoft ou a Sysinternals. ZoomIt é um produto da Microsoft; o nome é citado apenas como referência ao estilo de uso e aos atalhos que inspiraram este projeto.
