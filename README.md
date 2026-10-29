@@ -4,7 +4,7 @@
 
 Feito para quem gosta do [ZoomIt](https://learn.microsoft.com/sysinternals/downloads/zoomit) e se incomoda com uma coisa: ao entrar no modo desenho, ele tira uma "foto" da tela e você passa a riscar uma imagem parada. O vídeo pausa, o chat para de atualizar, o terminal congela e você não consegue clicar em nada até sair do desenho.
 
-O LiveZoomIt desenha numa camada transparente **por cima da tela viva**. Vídeos, chamadas, navegadores e terminais continuam rodando por baixo dos traços, e com um atalho você volta a usar os programas normalmente — com as anotações ainda na tela.
+O LiveZoomIt desenha numa camada transparente **por cima da tela viva**. Vídeos, chamadas, navegadores e terminais continuam rodando por baixo dos traços, e com um atalho você volta a usar os programas normalmente. Ao sair do desenho, as anotações são apagadas como no ZoomIt — ou, se preferir, ficam na tela enquanto você usa os programas.
 
 - **Atalhos familiares:** Ctrl+2 para desenhar, R / G / B / Y para as cores, Ctrl para retângulo, Shift para linha, E para apagar, W / K para quadro branco e negro, Ctrl+Z para desfazer.
 - **Um único `LiveZoomIt.exe` portátil:** sem instalação e sem precisar do .NET instalado.
@@ -13,7 +13,7 @@ O LiveZoomIt desenha numa camada transparente **por cima da tela viva**. Vídeos
 
 ## Download
 
-Baixe o `LiveZoomIt.exe` mais recente na página de [**Releases**](https://github.com/mnisenbaum/live-zoomit/releases) e execute. Não há instalador: para "desinstalar", feche o programa (Ctrl+Shift+Q) e apague o arquivo — e, se quiser, a pasta `%APPDATA%\LiveZoomIt` com as configurações.
+Baixe o `LiveZoomIt.exe` mais recente na página de [**Releases**](https://github.com/mnisenbaum/live-zoomit/releases) e execute. Não há instalador: para "desinstalar", feche o programa (Ctrl+Shift+F11) e apague o arquivo — e, se quiser, a pasta `%APPDATA%\LiveZoomIt` com as configurações.
 
 > Na primeira execução, o Windows pode mostrar o aviso azul **"O Windows protegeu o computador"** (SmartScreen), porque o executável não é assinado digitalmente. Clique em **Mais informações → Executar assim mesmo**. Se preferir, [compile você mesmo](#para-desenvolvedores) a partir do código-fonte.
 
@@ -22,7 +22,7 @@ Baixe o `LiveZoomIt.exe` mais recente na página de [**Releases**](https://githu
 | | ZoomIt | LiveZoomIt |
 |---|---|---|
 | Tela durante o desenho | Congelada numa imagem estática | **Continua viva** (vídeos, chats e terminais seguem rodando) |
-| Usar os programas com as anotações na tela | — | **Sim:** sai do modo desenho e os traços ficam; os cliques passam para os programas |
+| Usar os programas com as anotações na tela | — | **Opcional:** desligue "Apagar desenho ao sair" e os traços ficam na tela, com os cliques passando para os programas |
 | Desenho livre, retângulo, linha, elipse, seta | Sim | Sim (Alt + arrastar para a elipse) |
 | Cores, marca-texto, texto, quadro branco/negro, desfazer | Sim | Sim |
 | Lupa | Zoom da tela inteira | Lupa flutuante que segue o cursor (1,5× a 8×) |
@@ -37,7 +37,7 @@ O LiveZoomIt não tenta substituir tudo o que o ZoomIt faz — o foco é anotar 
 1. Execute `LiveZoomIt.exe`. Nenhuma janela abre — aparece só o **ícone de lupa azul** na área de notificação. (Se não o vir, clique na setinha **^** ao lado do relógio.)
 2. Aperte **Ctrl+2** (ou dê dois cliques no ícone) para entrar no modo desenho e arraste com o mouse para riscar a tela.
 3. Aperte **Esc** (ou **Ctrl+2** de novo) para voltar a usar o computador normalmente.
-4. Aperte **Ctrl+Shift+Q** (ou use **Sair** no menu do ícone) para fechar o programa.
+4. Aperte **Ctrl+Shift+F11** (ou use **Sair** no menu do ícone) para fechar o programa.
 
 ---
 
@@ -50,6 +50,7 @@ Clique com o **botão direito** no ícone de lupa para abrir o menu:
 | Modo desenho, Lupa, Holofote, Destaque de cliques, Mostrar teclas | Liga / desliga o recurso. O item fica marcado (✓) quando está ligado, e o atalho atual aparece à direita. |
 | Abrir pasta de capturas | Abre no Explorer a pasta onde o **Ctrl+S** salva as imagens. |
 | Editar configurações… | Abre o `settings.json` (veja [Configurações](#configurações)). |
+| Apagar desenho ao sair | Liga / desliga a limpeza do desenho ao sair do modo desenho (veja [Os dois modos](#os-dois-modos)). A escolha é gravada no `settings.json`. |
 | Recarregar configurações | Aplica o que você mudou no `settings.json` sem reiniciar o programa. |
 | Sair | Fecha o LiveZoomIt. |
 
@@ -61,10 +62,15 @@ Clique com o **botão direito** no ícone de lupa para abrir o menu:
 
 | Modo | Como entrar | O que acontece |
 |---|---|---|
-| **Transparente** (padrão) | Ao abrir, ou com **Esc** / **Ctrl+2** no modo desenho | Os cliques e o teclado passam direto para os programas. Os traços já feitos **continuam visíveis** por cima. |
+| **Transparente** (padrão) | Ao abrir, ou com **Esc** / **Ctrl+2** no modo desenho | Os cliques e o teclado passam direto para os programas. |
 | **Desenho** | **Ctrl+2** | O mouse desenha. Uma barra no topo do monitor principal mostra a ferramenta, a cor, a espessura e os atalhos. |
 
-Ao sair do modo desenho, o foco volta para o programa que você estava usando antes. O quadro branco/negro some, mas os traços permanecem até você apagá-los (**E**).
+Ao sair do modo desenho, o foco volta para o programa que você estava usando antes e o quadro branco/negro some.
+
+**O que acontece com o desenho ao sair** depende da opção **Apagar desenho ao sair**, no menu do ícone (ou `ClearOnExit` nas [Configurações](#configurações)):
+
+- **Ligada (padrão):** o desenho é apagado, como no ZoomIt. Apagou sem querer? Entre de novo no modo desenho e aperte **Ctrl+Z**: tudo volta.
+- **Desligada:** os traços **continuam visíveis** por cima dos programas enquanto você os usa, até você apagá-los (**E**). A barra de dica mostra qual das duas está valendo.
 
 ---
 
@@ -79,7 +85,7 @@ Funcionam em qualquer programa, a qualquer momento.
 | **Ctrl+3** | Liga / desliga o holofote |
 | **Ctrl+4** | Liga / desliga o destaque de cliques |
 | **Ctrl+5** | Liga / desliga a exibição de teclas |
-| **Ctrl+Shift+Q** | Fecha o LiveZoomIt |
+| **Ctrl+Shift+F11** | Fecha o LiveZoomIt |
 
 > Enquanto o LiveZoomIt estiver aberto, **Ctrl+1** a **Ctrl+5** ficam reservados para ele em todo o sistema (por exemplo, deixam de trocar de aba no navegador). Todos esses atalhos podem ser trocados ou desativados nas [Configurações](#configurações).
 
@@ -113,6 +119,8 @@ A forma é escolhida pela tecla que está **segurada no momento em que você ape
 | **Y** | Amarelo | Marca-texto amarelo |
 | **O** | Laranja | Marca-texto laranja |
 | **P** | Rosa | Marca-texto rosa |
+| **X** | Preto | Marca-texto preto (fica cinza) |
+| **C** | Branco | Marca-texto branco |
 
 As cores e suas teclas podem ser trocadas, removidas ou acrescentadas nas [Configurações](#configurações).
 
@@ -197,7 +205,7 @@ Cada traço, forma, texto, marcador, passada de borracha ou "apagar tudo" conta 
 
 | Tecla | Ação |
 |---|---|
-| **Esc** | Sai do modo desenho (se o texto ou os marcadores estiverem ativos, primeiro volta para a caneta) |
+| **Esc** | Sai do modo desenho (se o texto ou os marcadores estiverem ativos, primeiro volta para a caneta). Por padrão o desenho é apagado; veja [Os dois modos](#os-dois-modos). |
 | **Ctrl+2** | Sai do modo desenho |
 | **Alt+F4** | Também só sai do modo desenho — **não** fecha o programa |
 
@@ -255,7 +263,7 @@ As configurações ficam em `%APPDATA%\LiveZoomIt\settings.json`, criado com os 
     "ToggleSpotlight": "Ctrl+3",
     "ToggleClickHighlights": "Ctrl+4",
     "ToggleKeystrokes": "Ctrl+5",
-    "Quit": "Ctrl+Shift+Q"
+    "Quit": "Ctrl+Shift+F11"
   },
   "Colors": {
     "R": "#FF0000",
@@ -263,9 +271,12 @@ As configurações ficam em `%APPDATA%\LiveZoomIt\settings.json`, criado com os 
     "B": "#0060FF",
     "Y": "#FFE000",
     "O": "#FF8C00",
-    "P": "#FF3EA5"
+    "P": "#FF3EA5",
+    "X": "#000000",
+    "C": "#FFFFFF"
   },
   "StartColor": "R",
+  "ClearOnExit": true,
   "PenWidth": 4,
   "FontSize": 28,
   "Magnifier": { "Width": 420, "Height": 260, "Zoom": 2 },
@@ -280,6 +291,7 @@ As configurações ficam em `%APPDATA%\LiveZoomIt\settings.json`, criado com os 
 | `Hotkeys.*` | Atalhos globais | Modificadores `Ctrl`, `Alt`, `Shift`, `Win` + uma tecla (`A`–`Z`, `0`–`9`, `F1`–`F24`, nomes como `Home`, `PageUp`), ex.: `"Ctrl+Alt+D"`. Uma tecla de função pode ser usada sozinha (`"F9"`). Texto vazio (`""`) desativa o atalho — exceto `Quit`. |
 | `Colors` | Tecla → cor do modo desenho | Tecla: uma letra, exceto **L, T, N, W, K, E** (já usadas). Cor: `#RRGGBB` ou um nome em inglês (`"Purple"`, `"Cyan"`). Você pode remover ou acrescentar cores. |
 | `StartColor` | Cor inicial | Uma das teclas de `Colors`. |
+| `ClearOnExit` | Apagar o desenho ao sair do modo desenho | `true` (padrão, como no ZoomIt) ou `false` (o desenho fica na tela). Também muda pelo menu do ícone. |
 | `PenWidth` | Espessura inicial da caneta | 1 a 40 (arredondada para a espessura disponível mais próxima). |
 | `FontSize` | Tamanho inicial do texto e dos números | 12 a 120. |
 | `Magnifier` | Tamanho da lupa e ampliação inicial | `Width` 100–1600, `Height` 80–1200, `Zoom` 1,5–8. |
@@ -296,11 +308,11 @@ As configurações ficam em `%APPDATA%\LiveZoomIt\settings.json`, criado com os 
 ## Referência rápida
 
 ```
-GLOBAIS        Ctrl+2 desenho · Ctrl+1 lupa · Ctrl+3 holofote · Ctrl+4 cliques · Ctrl+5 teclas · Ctrl+Shift+Q sair
+GLOBAIS        Ctrl+2 desenho · Ctrl+1 lupa · Ctrl+3 holofote · Ctrl+4 cliques · Ctrl+5 teclas · Ctrl+Shift+F11 sair
 LUPA           Ctrl+Alt+roda muda a ampliação
 
 FORMAS         arrastar: livre · Ctrl: retângulo · Shift: linha · Alt: elipse · Ctrl+Shift: seta
-CORES          R G B Y O P (caneta) · Shift+cor (marca-texto) · L laser
+CORES          R G B Y O P X C (caneta) · Shift+cor (marca-texto) · L laser
 ESPESSURA      Ctrl+roda · Ctrl+↑/↓
 TEXTO          T, clicar, digitar, Esc
 NÚMEROS        N, clicar, clicar…, Esc
@@ -319,9 +331,10 @@ SAIR           Esc · Ctrl+2
 | Aviso "Atalhos em uso por outro programa" | Outro programa já usa algum dos atalhos. Os atalhos livres continuam funcionando; troque o atalho em conflito nas [Configurações](#configurações) ou feche o outro programa. |
 | Aviso "Configurações: …" no topo da tela | Algum valor do `settings.json` é inválido e foi trocado pelo padrão. O aviso diz qual campo; corrija e use **Recarregar configurações**. |
 | Não acho o ícone | Ele pode estar escondido: clique na setinha **^** ao lado do relógio. Você pode arrastá-lo para ficar sempre visível. |
-| Aviso "Nenhum atalho global pôde ser registrado" e o programa fecha | Provavelmente já existe um LiveZoomIt aberto. Use Ctrl+Shift+Q ou o Gerenciador de Tarefas. |
+| Aviso "Nenhum atalho global pôde ser registrado" e o programa fecha | Provavelmente já existe um LiveZoomIt aberto. Use Ctrl+Shift+F11 ou o Gerenciador de Tarefas. |
 | Apertei uma letra e nada aconteceu | Fora do modo desenho as teclas vão para os outros programas. Entre com Ctrl+2. Durante a digitação de um texto, as letras vão para o texto. |
-| Os traços continuam na tela depois de sair do desenho | É intencional. Entre no modo desenho e aperte **E**. |
+| O desenho some ao sair do modo desenho | É o padrão, como no ZoomIt. Para mantê-lo na tela, desligue **Apagar desenho ao sair** no menu do ícone. Para recuperar o que sumiu, entre no desenho e aperte **Ctrl+Z**. |
+| Os traços continuam na tela depois de sair do desenho | A opção **Apagar desenho ao sair** está desligada. Ligue-a no menu do ícone, ou entre no modo desenho e aperte **E**. |
 | Traços borrados ou deslocados com monitores de escalas diferentes | Limitação conhecida quando os monitores usam escalas diferentes (ex.: 100% e 150%). |
 | Aviso "O Windows protegeu o computador" ao abrir | O executável não é assinado digitalmente. Clique em **Mais informações → Executar assim mesmo**, ou compile a partir do código-fonte. |
 | Antivírus reclama do programa | O destaque de cliques e a exibição de teclas usam hooks globais de mouse e teclado — o mesmo mecanismo de ferramentas de acessibilidade e gravação de tela, que alguns antivírus tratam com desconfiança. Eles só ficam ativos enquanto esses recursos estão ligados, e nada é gravado em disco nem enviado pela rede. |

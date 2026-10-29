@@ -124,11 +124,12 @@ public partial class MainWindow : Window
             return;
         }
 
-        string message = $"Atalhos em uso por outro programa: {string.Join(", ", failed)}.";
-        if (initial)
-            MessageBox.Show(message, "LiveZoomIt", MessageBoxButton.OK, MessageBoxImage.Warning);
-        else
-            ShowToast(message, 6);
+        // Aviso não bloqueante: uma MessageBox aqui travaria a inicialização (e todos os atalhos) até ser fechada,
+        // e costuma ficar escondida atrás das outras janelas.
+        string message = $"Atalhos em uso por outro programa: {string.Join(", ", failed)}. Troque-os em Editar configurações…";
+        if (!_registeredHotkeys.Contains(HotkeyAction.Quit))
+            message += " Para sair, use Sair no menu do ícone.";
+        ShowToast(message, 10);
     }
 
     private void RunHotkey(HotkeyAction action)
@@ -194,6 +195,8 @@ public partial class MainWindow : Window
         FinishShape();
         FinishErase();
         if (_tool != Tool.Pen) SetTool(Tool.Pen);
+        // Como no ZoomIt; a limpeza entra no desfazer, então Ctrl+Z no próximo desenho traz tudo de volta.
+        if (_config.Settings.ClearOnExit) ClearDrawing();
         _drawing = false;
 
         Board.Visibility = Visibility.Collapsed;

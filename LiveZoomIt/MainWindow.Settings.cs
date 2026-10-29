@@ -29,6 +29,7 @@ public partial class MainWindow
         _penWidthIndex = NearestIndex(PenWidths, s.PenWidth);
         _fontSizeIndex = NearestIndex(FontSizes, s.FontSize);
         ColorKeysHint.Text = $"{string.Join(" ", _colors.Keys)} cor  ·  Shift+cor marca-texto  ·  L laser  ·  T texto  ·  N números  ·  Ctrl+roda tamanho  ·  W / K quadro";
+        UpdateExitHint();
 
         if (!initial)
         {
@@ -55,6 +56,27 @@ public partial class MainWindow
         else if (!initial)
         {
             ShowToast("Configurações recarregadas");
+        }
+    }
+
+    private void UpdateExitHint() =>
+        ExitHint.Text = "Ctrl+Z / Ctrl+Y desfazer / refazer  ·  Ctrl+C copiar · Ctrl+S salvar  ·  "
+            + (_config.Settings.ClearOnExit ? "Esc sair e apagar" : "Esc sair (o desenho fica)");
+
+    /// <summary>Liga/desliga "apagar ao sair" pelo menu do ícone e grava no settings.json.</summary>
+    private void ToggleClearOnExit()
+    {
+        bool enabled = !_config.Settings.ClearOnExit;
+        _config.Settings.ClearOnExit = enabled;
+        UpdateExitHint();
+        try
+        {
+            SettingsLoader.SaveValue(SettingsLoader.DefaultPath, nameof(AppSettings.ClearOnExit), enabled);
+            ShowToast(enabled ? "O desenho será apagado ao sair do modo desenho" : "O desenho ficará na tela ao sair do modo desenho");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
+        {
+            ShowToast($"Alterado só nesta sessão; não foi possível gravar o settings.json: {ex.Message}", 6);
         }
     }
 

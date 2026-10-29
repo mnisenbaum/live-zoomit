@@ -46,6 +46,8 @@ public class StepMarkersTests
     [InlineData(0x00, 0xD0, 0x00, false)] // verde
     [InlineData(0x00, 0x60, 0xFF, false)] // azul
     [InlineData(0xFF, 0x3E, 0xA5, false)] // rosa
+    [InlineData(0xFF, 0xFF, 0xFF, true)]  // branco
+    [InlineData(0x00, 0x00, 0x00, false)] // preto
     public void TextContrastFollowsFillBrightness(byte r, byte g, byte b, bool dark) =>
         Assert.Equal(dark, StepMarkers.UseDarkText(Color.FromRgb(r, g, b)));
 }

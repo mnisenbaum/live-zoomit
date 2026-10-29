@@ -12,6 +12,10 @@ public sealed class AppSettings
     public Dictionary<string, string> Colors { get; set; } = DefaultColors();
 
     public string StartColor { get; set; } = "R";
+
+    /// <summary>Apagar traços, textos e marcadores ao sair do modo desenho (como no ZoomIt). Ctrl+Z traz de volta.</summary>
+    public bool ClearOnExit { get; set; } = true;
+
     public double PenWidth { get; set; } = 4;
     public double FontSize { get; set; } = 28;
     public MagnifierSettings Magnifier { get; set; } = new();
@@ -29,6 +33,9 @@ public sealed class AppSettings
         ["Y"] = "#FFE000",
         ["O"] = "#FF8C00",
         ["P"] = "#FF3EA5",
+        // W e K já são os quadros branco e negro; X e C ficam lado a lado no teclado.
+        ["X"] = "#000000",
+        ["C"] = "#FFFFFF",
     };
 }
 
@@ -40,7 +47,7 @@ public sealed class HotkeySettings
     public string ToggleSpotlight { get; set; } = "Ctrl+3";
     public string ToggleClickHighlights { get; set; } = "Ctrl+4";
     public string ToggleKeystrokes { get; set; } = "Ctrl+5";
-    public string Quit { get; set; } = "Ctrl+Shift+Q";
+    public string Quit { get; set; } = "Ctrl+Shift+F11";
 }
 
 public sealed class MagnifierSettings

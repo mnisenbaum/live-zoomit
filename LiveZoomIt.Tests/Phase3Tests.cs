@@ -44,8 +44,42 @@ public class SettingsLoaderTests
         Assert.Empty(loaded.Warnings);
         Assert.Equal(6, loaded.Hotkeys.Count);
         Assert.Equal("Ctrl+2", loaded.Hotkeys[HotkeyAction.ToggleDraw].Display);
-        Assert.Equal([Key.R, Key.G, Key.B, Key.Y, Key.O, Key.P], loaded.Colors.Keys);
+        Assert.Equal([Key.R, Key.G, Key.B, Key.Y, Key.O, Key.P, Key.X, Key.C], loaded.Colors.Keys);
+        Assert.Equal(Colors.Black, loaded.Colors[Key.X]);
+        Assert.Equal(Colors.White, loaded.Colors[Key.C]);
         Assert.Equal(Key.R, loaded.StartColor);
+        Assert.True(loaded.Settings.ClearOnExit);
+    }
+
+    [Fact]
+    public void ClearOnExitCanBeTurnedOff() =>
+        Assert.False(SettingsLoader.FromJson("""{ "ClearOnExit": false }""").Settings.ClearOnExit);
+
+    [Fact]
+    public void SetTopLevelValue_ReplacesExistingKeyKeepingItsSpellingAndOtherValues()
+    {
+        string json = SettingsLoader.SetTopLevelValue("""
+            {
+              // comentário
+              "clearonexit": true,
+              "CaptureFolder": "%USERPROFILE%\\Capturas",
+            }
+            """, "ClearOnExit", false);
+
+        Assert.Contains("\"clearonexit\": false", json);
+        Assert.DoesNotContain("\"ClearOnExit\"", json);
+        Assert.Contains("%USERPROFILE%", json); // não expande nem "corrige" os outros campos
+        Assert.False(SettingsLoader.FromJson(json).Settings.ClearOnExit);
+    }
+
+    [Fact]
+    public void SetTopLevelValue_AddsMissingKey()
+    {
+        string json = SettingsLoader.SetTopLevelValue("""{ "PenWidth": 8 }""", "ClearOnExit", false);
+
+        var loaded = SettingsLoader.FromJson(json);
+        Assert.False(loaded.Settings.ClearOnExit);
+        Assert.Equal(8, loaded.Settings.PenWidth);
     }
 
     [Fact]
@@ -60,7 +94,7 @@ public class SettingsLoaderTests
     {
         string json = SettingsLoader.Serialize(new AppSettings());
 
-        Assert.Contains("\"Ctrl+Shift+Q\"", json);
+        Assert.Contains("\"Ctrl+Shift+F11\"", json);
         Assert.DoesNotContain("\\u", json);
     }
 
@@ -125,7 +159,7 @@ public class SettingsLoaderTests
         var loaded = SettingsLoader.FromJson("""{ "Hotkeys": { "ToggleSpotlight": "", "Quit": "" } }""");
 
         Assert.False(loaded.Hotkeys.ContainsKey(HotkeyAction.ToggleSpotlight));
-        Assert.Equal("Ctrl+Shift+Q", loaded.Hotkeys[HotkeyAction.Quit].Display);
+        Assert.Equal("Ctrl+Shift+F11", loaded.Hotkeys[HotkeyAction.Quit].Display);
     }
 
     [Fact]

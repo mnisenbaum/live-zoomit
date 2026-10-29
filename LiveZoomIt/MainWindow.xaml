@@ -35,8 +35,8 @@
                             <TextBlock x:Name="ColorKeysHint" Foreground="#E0FFFFFF" FontFamily="Segoe UI" FontSize="12" />
                             <TextBlock Foreground="#E0FFFFFF" FontFamily="Segoe UI" FontSize="12"
                                        Text="Arrastar com Ctrl retângulo · Shift linha · Alt elipse · Ctrl+Shift seta  ·  Botão direito apaga  ·  E limpar tudo" />
-                            <TextBlock Foreground="#E0FFFFFF" FontFamily="Segoe UI" FontSize="12"
-                                       Text="Ctrl+Z / Ctrl+Y desfazer / refazer  ·  Ctrl+C copiar · Ctrl+S salvar  ·  Esc sair" />
+                            <!-- Preenchido em código: o Esc diz se apaga o desenho (ClearOnExit). -->
+                            <TextBlock x:Name="ExitHint" Foreground="#E0FFFFFF" FontFamily="Segoe UI" FontSize="12" />
                         </StackPanel>
                     </StackPanel>
                 </Border>

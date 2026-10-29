@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Windows.Input;
 using System.Windows.Media;
 
@@ -64,6 +65,28 @@ public static class SettingsLoader
     }
 
     public static string Serialize(AppSettings settings) => JsonSerializer.Serialize(settings, Options);
+
+    /// <summary>
+    /// Grava um campo de primeiro nível no arquivo (ex.: pelo menu do ícone), mantendo os demais valores
+    /// exatamente como o usuário escreveu. Comentários do arquivo se perdem nessa regravação.
+    /// </summary>
+    public static void SaveValue(string path, string name, JsonNode? value)
+    {
+        string json = File.Exists(path) ? File.ReadAllText(path) : Serialize(new AppSettings());
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        File.WriteAllText(path, SetTopLevelValue(json, name, value));
+    }
+
+    public static string SetTopLevelValue(string json, string name, JsonNode? value)
+    {
+        var documentOptions = new JsonDocumentOptions { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true };
+        var root = JsonNode.Parse(json, documentOptions: documentOptions) as JsonObject ?? new JsonObject();
+
+        // Os nomes são lidos sem diferenciar maiúsculas; reaproveita a grafia que já estiver no arquivo.
+        string key = root.Select(p => p.Key).FirstOrDefault(k => string.Equals(k, name, StringComparison.OrdinalIgnoreCase)) ?? name;
+        root[key] = value;
+        return root.ToJsonString(Options);
+    }
 
     public static LoadedSettings FromJson(string json)
     {

@@ -14,6 +14,7 @@ public partial class MainWindow
     private Forms.ToolStripMenuItem? _traySpotlight;
     private Forms.ToolStripMenuItem? _trayClicks;
     private Forms.ToolStripMenuItem? _trayKeystrokes;
+    private Forms.ToolStripMenuItem? _trayClearOnExit;
 
     private void CreateTrayIcon()
     {
@@ -24,6 +25,7 @@ public partial class MainWindow
         _trayClicks = AddTrayItem(menu, "Destaque de cliques", HotkeyAction.ToggleClickHighlights, ToggleClickHighlights);
         _trayKeystrokes = AddTrayItem(menu, "Mostrar teclas", HotkeyAction.ToggleKeystrokes, ToggleKeystrokes);
         menu.Items.Add(new Forms.ToolStripSeparator());
+        _trayClearOnExit = AddTrayItem(menu, "Apagar desenho ao sair", null, ToggleClearOnExit);
         AddTrayItem(menu, "Abrir pasta de capturas", null, OpenCaptureFolder);
         AddTrayItem(menu, "Editar configurações…", null, OpenSettingsFile);
         AddTrayItem(menu, "Recarregar configurações", null, () => LoadSettings(initial: false));
@@ -67,6 +69,7 @@ public partial class MainWindow
         _traySpotlight!.Checked = _spotlight?.IsRunning == true;
         _trayClicks!.Checked = _clickHighlights;
         _trayKeystrokes!.Checked = KeystrokesVisible;
+        _trayClearOnExit!.Checked = _config.Settings.ClearOnExit;
 
         foreach (var (item, action) in _trayHotkeyItems)
             item.ShortcutKeyDisplayString = _config.Hotkeys.TryGetValue(action, out var hotkey) ? hotkey.Display : "";
